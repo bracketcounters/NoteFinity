@@ -1,0 +1,1 @@
+const{app:e,BrowserWindow:n}=require("electron");require("path");let r;e.on("ready",()=>{(r=new n({width:800,height:600,autoHideMenuBar:!0,icon:"logo.png",frame:!1,webPreferences:{nodeIntegration:!0}})).loadFile("pages/index.html")});

@@ -1,0 +1,26 @@
+{
+  "name": "notedroid",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tailwindcss -i src/style.css -o assets/style.css & electron .",
+    "watch": "nodemon --ext js,html --exec npm run start",
+    "pack": "electron-packager ./ NoteDroid --platform=win32 --icon=favicon.ico --arch-x64 --overwrite",
+    "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "electron": "^6.0.0",
+    "electron-packager": "^17.1.1",
+    "electron-window-state": "^5.0.3",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.2.7",
+    "uglify-js": "^3.17.4"
+  },
+  "dependencies": {
+  }
+}
