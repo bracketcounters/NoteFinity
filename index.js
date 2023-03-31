@@ -1,5 +1,7 @@
 const {app, BrowserWindow, ipcMain} = require("electron");
 const windowStateKeeper = require("electron-window-state")
+const { DataStorage, FileStorage } = require("./src/storage");
+const { Modal } = require("./src/modal");
 
 let win;
 function createWindow() {
@@ -13,7 +15,7 @@ function createWindow() {
         x: windowState.x,
         y: windowState.y,
         autoHideMenuBar: true,
-        icon: "logo.png",
+        icon: "assets/icons/notefinity.png",
         frame: false,
         minWidth: 312,
         minHeight: 120,
@@ -22,7 +24,8 @@ function createWindow() {
             contextIsolation: false,
         }
     })
-    win.loadFile("pages/index.html");
+    win.loadFile("src/pages/index.html");
+    // win.webContents.openDevTools();
     windowState.manage(win);
     ipcMain.on("appAction", (event, data)=>{
         if (data == "maximize") {
@@ -41,6 +44,22 @@ function createWindow() {
         }
     })
 }
+
+ipcMain.on("open-modal", (event, data)=>{
+    switch (data) {
+        case "frame":
+            let modal = new Modal(400, 300, win, "src/pages/customizations/frame.html", false);
+            modal.open();
+            break;
+    
+        default:
+            break;
+    }
+})
+
+ipcMain.on("check-customization-frame", (event, data)=>{
+    win.webContents.send("check-customization-frame-check", true);
+})
 
 app.on("ready", ()=>{
     createWindow();

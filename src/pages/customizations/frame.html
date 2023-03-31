@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <style>
+        /* body {
+            background: url(../../../assets/images/background.png);
+            background-position: center;
+            background-size: cover;
+            height: 100%;
+        } */
+        /* body {
+            background: linear-gradient(to bottom right, #FFF, #FFF, #DADEE2, #EFE9EF, #FFF);
+            min-height: 100vh;
+        } */
+    </style>
+    <title>Frame Panel</title>
+</head>
+<body class="bg-gray-100 select-none">
+    <div class="container p-3">
+        <div class="mt-1 mb-2">
+            <p class="text-xs my-1">Alignment</p>
+            <select class="px-2 py-1 w-full text-xs rounded outline-none border cursor-pointer" id="alignment">
+                <option value="nba">NoteFinity -- Blank -- App Actions</option>
+                <option value="anb">App Actions -- NoteFinity -- Blank</option>
+            </select>
+        </div>
+        <div class="my-2">
+            <p class="text-xs my-1">App Action Icons</p>
+            <div class="my-2 flex justify-start w-full space-x-4">
+                <img src="../../../assets/images/navigationpane1.png" draggable="false" class="navigationPaneSelector">
+                <img src="../../../assets/images/navigationpane3.png" draggable="false" class="navigationPaneSelector">
+                <img src="../../../assets/images/navigationpane4.png" draggable="false" class="navigationPaneSelector">
+                <img src="../../../assets/images/navigationpane2.png" draggable="false" class="navigationPaneSelector border-2">
+            </div>
+        </div>
+        <div class="mt-2 mb-1 disableFrameNavigationColor" id="frameNavigationColor">
+            <p class="text-xs my-1">Colors</p>
+            <div class="flex justify-between">
+                <div class="flex justify-center space-x-2">
+                    <input type="color" id="colorMaximize" class="outline-none cursor-pointer">
+                    <p class="text-xs text-gray-800 text-center">Maximize</p>
+                </div>
+                <div class="flex justify-center space-x-2">
+                    <input type="color" id="colorMinimize" class="outline-none cursor-pointer">
+                    <p class="text-xs text-gray-800 text-center">Minimize</p>
+                </div>
+                <div class="flex justify-center space-x-2">
+                    <input type="color" id="colorClose" class="outline-none cursor-pointer">
+                    <p class="text-xs text-gray-800 text-center">Close</p>
+                </div>
+            </div>
+            <p class="text-xs mt-1 inline cursor-pointer hover:underline"
+            id="framenavigationColorReset">Reset</p>
+        </div>
+        <button id="customizationSave" class="px-3 py-1 mt-5 w-full outline-none rounded text-white bg-[#0073f1] hover:bg-[#0d64c0]">Save</button>
+        <script src="../../../assets/js/compulsory.js"></script>
+        <script>
+            function clearNavigationPaneSelection(n) {
+                _cls("navigationPaneSelector").forEach(element => {
+                element.classList.remove("border-2");
+            });
+            }
+            
+            let navigationSelected = 3;
+            let initialData = localStorage.getItem("customizationNavigation");
+            if (initialData != null) {
+                initialData = JSON.parse(initialData);
+                _id("alignment").value = initialData.alignment;
+                clearNavigationPaneSelection();
+                navigationSelected = initialData.navigationPane;
+                _cls("navigationPaneSelector")[navigationSelected].classList.add("border-2");
+                _id("colorMaximize").value = initialData.colors.maximize;
+                _id("colorMinimize").value = initialData.colors.minimize;
+                _id("colorClose").value = initialData.colors.close;
+                if (navigationSelected == 3) {
+                    _id("frameNavigationColor").classList.remove("disableFrameNavigationColor")
+                }
+                else {
+                    _id("frameNavigationColor").classList.add("disableFrameNavigationColor")
+                }
+            }
+            else {
+                _id("colorMaximize").value = `#16A34A`;
+                _id("colorMinimize").value = `#FACC15`;
+                _id("colorClose").value = `#DC2626`;
+                _id("frameNavigationColor").classList.remove("disableFrameNavigationColor");
+            }
+
+            for (let i = 0; i < _cls("navigationPaneSelector").length; i++) {
+                const element = _cls("navigationPaneSelector")[i];
+                element.addEventListener("click", (e)=>{
+                    clearNavigationPaneSelection();
+                    element.classList.add("border-2");
+                    navigationSelected = i;
+                    if (i == 3) {
+                        _id("frameNavigationColor").classList.remove("disableFrameNavigationColor")
+                    }
+                    else {
+                        _id("frameNavigationColor").classList.add("disableFrameNavigationColor")
+                    }
+                })
+            }
+
+            const { ipcRenderer } = require("electron");
+
+            _id("customizationSave").addEventListener("click", (e)=>{
+                let data = {
+                    alignment: _id("alignment").value,
+                    navigationPane: navigationSelected,
+                    colors: {
+                        maximize: _id("colorMaximize").value,
+                        minimize: _id("colorMinimize").value,
+                        close: _id("colorClose").value
+                    }
+                }
+                localStorage.setItem("customizationNavigation", JSON.stringify(data));
+                ipcRenderer.send("check-customization-frame", true);
+            })
+            _id("framenavigationColorReset").addEventListener("click", (e)=>{
+                _id("colorMaximize").value = `#16A34A`;
+                _id("colorMinimize").value = `#FACC15`;
+                _id("colorClose").value = `#DC2626`;
+            })
+
+            window.addEventListener("keydown", (e)=>{
+                if (e.keyCode == 27) {
+                    window.close();
+                }
+            })
+        </script>
+    </div>
+</body>
+</html>
