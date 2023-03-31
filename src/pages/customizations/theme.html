@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Theme Panel</title>
+</head>
+<body class="bg-gray-100 select-none">
+    <div class="container p-3">
+        <div>
+            <h2 class="text-xs my-1">Choose Your Theme</h2>
+            <div class="flex flex-wrap my-2" id="themes">
+                
+            </div>
+        </div>
+
+    </div>
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script src="../../../assets/js/themes.js"></script>
+    <script>
+        let activeTheme = localStorage.getItem("activeTheme");
+        let activeThemeName = "";
+        if (activeTheme != null) {
+            activeTheme = JSON.parse(activeTheme);
+            activeThemeName = activeTheme.name;
+        }
+        else {
+            activeThemeName = "Icy Blue"
+        }
+        for (let i in themes) {
+            let activeClass = "";
+            if (i == activeThemeName) {
+                activeClass = "themeSelector-active"
+            }
+            _id("themes").innerHTML += `<div class="themeSelector ${activeClass}" onclick="changeTheme(this.innerHTML)">${i}</div>`;
+        }
+        function changeThemeStatus(theme) {
+            _elms(".themeSelector").forEach(element => {
+                element.classList.remove("themeSelector-active");
+                if (element.innerHTML == theme) {
+                    element.classList.add("themeSelector-active");
+                }
+            });
+            
+        }
+        const { ipcRenderer } = require("electron");
+        function changeTheme(themeName) {
+            let themeData = themes[themeName]
+            themeData.name = themeName;
+            changeThemeStatus(themeName);
+            localStorage.setItem("activeTheme", JSON.stringify(themeData));
+            ipcRenderer.send("check-theme", true);
+        }
+        window.addEventListener("keydown", (e)=>{
+            if (e.keyCode == 27) {
+                window.close();
+            }
+        })
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tailwindcss -i src/style.css -o assets/css/style.css & electron .",
     "go": "electron .",
-    "watch": "nodemon --ext js,html --exec npm run start",
+    "watch": "nodemon --ext js,css,html --exec npm run start",
     "pack": "electron-packager ./ NoteFinity --platform=win32 --icon=favicon.ico --arch-x64 --overwrite",
     "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
   },

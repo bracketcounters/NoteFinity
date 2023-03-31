@@ -29,12 +29,12 @@
     </style>
     <title>NoteFinity</title>
 </head>
-<body class="bg-gray-200 rounded-md select-none">
+<body class="rounded-md select-none">
     <header class="w-full flex flex-col">
-        <div class="flex justify-between items-center w-full h-8 bg-white px-2" id="headerPane" style="-webkit-app-region: drag;">
+        <div class="flex justify-between items-center w-full h-8 px-2" id="headerPane" style="-webkit-app-region: drag;">
 
         </div>
-        <ul class="w-full h-6 bg-white text-black flex items-center justify-start">
+        <ul class="w-full h-6  flex items-center justify-start" id="headerNavigation">
             <li class="navlist-item">
                 <span>File</span>
                 <ul class="navlist-sublist w-40 ml-1">
@@ -79,15 +79,15 @@
                 <span>Customization</span>
                 <ul class="navlist-sublist w-32">
                     <li onclick="openModal('frame')">Frame</li>
-                    <li>Appearence</li>
-                    <li>Textbox Theme</li>
+                    <li onclick="openModal('theme')">Theme</li>
+                    <li>Textbox</li>
                 </ul>
             </li>
             <li class="navlist-item"><span>Help</span></li>
         </ul>
     </header>
     <div id="editor" class="absolute w-full top-14 bottom-7 left-0 right-0 outline-0 z-0"></div>
-    <div class="w-full h-7 flex items-start justify-start bg-white fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll" id="tabscroll">
+    <div class="w-full h-7 flex items-start justify-start fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll" id="tabscroll">
         <div class="tabitem">Untitled <span class="tabitem-close">&times;</span></div>
         <div class="tabitem">package.json <span class="tabitem-close">&times;</span></div>
         <div class="tabitem">index.html <span class="tabitem-close">&times;</span></div>
@@ -95,15 +95,11 @@
         <div class="tabitem tabitem-active">style.css <span class="tabitem-close">&times;</span></div>
     </div>
     <script src="../../assets/js/ace.js"></script>
+    <script src="../../assets/js/compulsory.js"></script>
     <script src="../../assets/js/framecomponents.js"></script>
-    <script>
-        function _id(elm) {
-            return document.getElementById(elm);
-        }
-        function _cls(elms) {
-            return document.querySelectorAll(`.${elms}`);
-        }
-        
+    <script src="../../assets/js/themes.js"></script>
+    <script src="../../assets/js/htmlrootclasses.js"></script>
+    <script>        
         const tabscroll = document.getElementById('tabscroll');
 
         tabscroll.addEventListener("wheel", (e)=>{
@@ -187,6 +183,30 @@
             checkCustomizationFrame();
         })
         checkCustomizationFrame();
+
+        function refreshTheme() {
+            let themeData = localStorage.getItem("activeTheme");
+            if (themeData != null) {
+                themeData = JSON.parse(themeData);
+            }
+            else {
+                themeData = themes["Icy Blue"];
+            }
+            document.body.className = rootClasses.body + " " + themeData.playground;
+            _id("tabscroll").className = rootClasses["#tabscroll"] + " " + themeData.playground;
+            document.getElementsByClassName("tabitem-active")[0].className = rootClasses[".tabitem-active"] + " " + themeData.tabactive;
+            _elms(".navlist-sublist li").forEach(element => {
+                element.className = rootClasses[".navlist-sublist li"] + " " + themeData.navigationList;
+            });
+            _cls("navlist-item").forEach(element => {
+                element.className = rootClasses[".navlist-item"] + " " + themeData.navigation;
+            });
+        }
+        ipcRenderer.on("check-theme-check", (event, data)=>{
+            refreshTheme();
+        })
+        refreshTheme();
+
 
 
 

@@ -60,6 +60,80 @@
     <div class="w-5 h-5" onclick="appAction('exit')">
         <svg class="cursor-pointer w-full" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24"><defs><radialGradient id="a" cx="12" cy="12" r="12" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d0d0d0"/></radialGradient></defs><rect width="24" height="24" fill="none"/><circle cx="12" cy="12" r="12" fill="url(#a)"/><ellipse cx="12" cy="4.31" rx="7.08" ry="3.54" fill="#eee"/><path d="M13.74,12.08l2.63-2.4a1.23,1.23,0,1,0-1.66-1.82l-2.63,2.4L9.68,7.63A1.23,1.23,0,0,0,7.86,9.29l2.4,2.63-2.63,2.4a1.23,1.23,0,0,0,.83,2.14,1.19,1.19,0,0,0,.83-.32l2.63-2.4,2.4,2.63a1.24,1.24,0,0,0,1.74.08,1.23,1.23,0,0,0,.08-1.74Z"/></svg>
     </div>
-    
-
 </div>
+
+const themes = {
+  "Ice Palace": {
+    playground: "bg-white text-black",
+    navigation: "bg-white hover:bg-gray-400 text-gray-800 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-gray-200 active:text-white active:bg-sky-400",
+    tabactive: "border-gray-300"
+  },
+  "Icy Blue": {
+    playground: "bg-white text-black",
+    navigation: "bg-white hover:bg-gray-400 text-gray-800 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-gray-200 active:text-white active:bg-sky-400",
+    tabactive: "border-gray-300"
+  },
+  "Rosy": {
+    playground: "bg-white text-gray-800",
+    navigation: "bg-white hover:bg-pink-200 text-gray-800 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-pink-200 active:text-white active:bg-pink-500",
+    tabactive: "border-gray-300"
+  },
+  "Dark Knight": {
+    playground: "bg-gray-800 text-gray-400",
+    navigation: "bg-gray-900 hover:bg-gray-700 text-gray-400 hover:text-white",
+    navigationList:
+      "bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-700 active:text-white active:bg-blue-500",
+    tabactive: "border-gray-600"
+  },
+};
+const rootClasses = {
+  body: "rounded-md select-none",
+  "#headerPane": "flex justify-between items-center w-full h-8 px-2",
+  "#headerNavigation": "w-full h-6 flex items-center justify-start",
+  "#tabscroll": "w-full h-7 flex items-start justify-start fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll",
+  ".navlist-sublist li": "cursor-pointer px-4 py-2",
+  ".tabitem-active": "tabitem tabitem-active",
+  ".tabitem-close": "text-xs ml-1 px-1 py-0 rounded-sm"
+}
+const themes = {
+  "Ice Palace": {
+    playground: "bg-white text-black",
+    navigation: "bg-transparent hover:bg-gray-200 text-gray-800 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-gray-200 active:text-white active:bg-sky-400",
+    tabactive: "border-gray-300"
+  },
+  "Icy Blue": {
+    playground: "bg-white text-black",
+    navigation: "bg-transparent hover:bg-gray-200 text-gray-800 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-gray-200 active:text-white active:bg-sky-400",
+    tabactive: "border-gray-300"
+  },
+  "Rosy": {
+    playground: "bg-white text-gray-800",
+    navigation: "bg-transparent text-gray-800 hover:bg-pink-100 hover:text-gray-800",
+    navigationList:
+      "bg-white text-gray-800 hover:text-gray-800 hover:bg-pink-200 active:text-white active:bg-pink-500",
+    tabactive: "border-pink-300"
+  },
+  "Dark Knight": {
+    playground: "bg-gray-800 text-gray-400",
+    navigation: "bg-transparent hover:bg-gray-600",
+    navigationList:
+      "bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-600 active:text-white active:bg-blue-500",
+    tabactive: "border-gray-600"
+  },
+};
+
+
+
+
+
+bg-transparent

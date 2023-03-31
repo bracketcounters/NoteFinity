@@ -48,9 +48,13 @@ function createWindow() {
 ipcMain.on("open-modal", (event, data)=>{
     switch (data) {
         case "frame":
-            let modal = new Modal(400, 300, win, "src/pages/customizations/frame.html", false);
-            modal.open();
+            let modalFrame = new Modal(400, 300, win, "src/pages/customizations/frame.html", false);
+            modalFrame.open();
             break;
+
+        case "theme":
+            let modalTheme = new Modal(500, 300, win, "src/pages/customizations/theme.html", false);
+            modalTheme.open();
     
         default:
             break;
@@ -61,7 +65,13 @@ ipcMain.on("check-customization-frame", (event, data)=>{
     win.webContents.send("check-customization-frame-check", true);
 })
 
+ipcMain.on("check-theme", (event, data)=>{
+    win.webContents.send("check-theme-check", true);
+})
+
 app.on("ready", ()=>{
     createWindow();
+    // let modalTheme = new Modal(500, 300, win, "src/pages/customizations/theme.html", false);
+    // modalTheme.open();
 })
 
