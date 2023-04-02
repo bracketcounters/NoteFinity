@@ -157,7 +157,5 @@ ipcMain.on("delete-textbox-image", (event, data)=>{
 
 app.on("ready", ()=>{
     createWindow();
-    let modalTextbox = new Modal(400, 550, win, "src/pages/customizations/textbox.html", false);
-    modalTextbox.open();
 })
 
