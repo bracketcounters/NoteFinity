@@ -79,6 +79,12 @@
             themeData = JSON.parse(themeData);
             _id("themeSelector").value = themeData.theme;
             _id("gridImage").checked = themeData.grid;
+            if (themeData.theme != "chrome") {
+                _id("gridImageBox").classList.add("invisible");
+            }
+            else {
+                _id("gridImageBox").classList.remove("invisible");
+            }
         }
 
         _id("themeSelector").addEventListener("change", (e)=>{
