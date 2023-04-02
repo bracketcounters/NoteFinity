@@ -12,7 +12,7 @@ const actionPanes = [
         </div>
     </div>`,
 
-     `<div id="appActionPaneSub" class="flex justify-between items-center space-x-4 p-2 -mt-2" style="-webkit-app-region: no-drag;">
+     `<div id="appActionPaneSub" class="flex justify-between items-center space-x-4 bg-white h-full p-2 rounded-b -mt-2" style="-webkit-app-region: no-drag;">
         <div class="w-3.5 h-3.5 cursor-pointer" onclick="appAction('minimize')">
             <svg class="w-full fill-gray-700 hover:fill-yellow-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M21.17,10H2.83A1.92,1.92,0,0,0,1,12a1.92,1.92,0,0,0,1.83,2H21.17A1.92,1.92,0,0,0,23,12,1.92,1.92,0,0,0,21.17,10Z"/><rect width="24" height="24" fill="none"/></svg>
         </div>

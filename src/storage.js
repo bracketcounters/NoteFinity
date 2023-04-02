@@ -40,6 +40,15 @@ class Storage {
         }
     }
 
+    getBinaryData() {
+        try {
+            let data = fs.readFileSync(this.file);
+            return data;
+        }
+        catch(err) {
+        }
+    }
+
     getJSON() {
         let data = this.getData();
         try {

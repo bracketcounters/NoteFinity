@@ -115,6 +115,9 @@
             })
 
             window.addEventListener("keydown", (e)=>{
+                if (e.altKey) {
+                    e.preventDefault();
+                }
                 if (e.keyCode == 27) {
                     window.close();
                 }

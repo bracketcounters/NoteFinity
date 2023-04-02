@@ -152,22 +152,5 @@ const themes = {
     navigation: "bg-transparent hover:bg-teal-500",
     navigationList: "bg-teal-600 text-gray-200 hover:text-white hover:bg-teal-700 active:text-white active:bg-teal-800",
     tabactive: "border-teal-800"
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-        
+  }  
 };

@@ -14,11 +14,11 @@
         *::-webkit-scrollbar-thumb {
             background: rgba(70, 70, 70, 0.2);
         }
-        #editor {
-            background: url(../../assets/images/background3.png), url(../../assets/images/background.png);
+        /* #editor {
+            background: url(../../assets/images/background-grid.png), url(../../assets/images/background-gradient.png);
             background-position: center, center;
             background-size: contain, cover;
-        }
+        } */
 /* 		
         #editor {
             background: url(../assets/background.png);
@@ -27,6 +27,7 @@
         }
 		 */
     </style>
+    <style id="configurableStyle"></style>
     <title>NoteFinity</title>
 </head>
 <body class="rounded-md select-none">
@@ -80,7 +81,7 @@
                 <ul class="navlist-sublist w-32">
                     <li onclick="openModal('frame')">Frame</li>
                     <li onclick="openModal('theme')">Theme</li>
-                    <li>Textbox</li>
+                    <li onclick="openModal('textbox')">Textbox</li>
                 </ul>
             </li>
             <li class="navlist-item"><span>Help</span></li>
@@ -206,6 +207,52 @@
             refreshTheme();
         })
         refreshTheme();
+
+        function refreshTextboxTheme() {
+            let textboxThemeData = localStorage.getItem("activeTextBoxTheme");
+            let textBoxThemeID = "chrome";
+            let textBoxThemeImage = false;
+            let textBoxGrid = true;
+            if (textboxThemeData != null) {
+                textboxThemeData = JSON.parse(textboxThemeData);
+                textBoxThemeID = textboxThemeData.theme;
+                if (textBoxThemeID == "chrome") {
+                    textBoxThemeImage = textboxThemeData.image;
+                    textBoxGrid = textboxThemeData.grid;
+                }
+            }
+            else {
+                textBoxThemeID = "chrome";
+                textBoxThemeImage = "../../assets/images/background-gradient.png";
+                textBoxGrid = true;
+            }
+            editor.setTheme(`ace/theme/${textBoxThemeID}`);
+
+            if (textBoxThemeImage != false) {
+                if (textBoxGrid) {
+                    _id("configurableStyle").innerHTML = `#editor {
+                        background: url(../../assets/images/background-grid.png), url(${textBoxThemeImage});
+                        background-position: center, center;
+                        background-size: contain, cover;
+                    } `;
+                }
+                else {
+                    _id("configurableStyle").innerHTML = `#editor {
+                        background: url(${textBoxThemeImage});
+                        background-position: center;
+                        background-size: cover;
+                    } `;
+                }
+            }
+            else {
+                _id("configurableStyle").innerHTML = "";
+            }
+        }
+
+        ipcRenderer.on("check-textbox-theme-check", (event, data)=>{
+            refreshTextboxTheme();
+        })
+        refreshTextboxTheme();
 
 
 

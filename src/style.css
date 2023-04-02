@@ -73,3 +73,28 @@
 .themeSelector-active {
     @apply border-2 border-gray-600;
 }
+.textboxThemeBGImageSelector:hover .textboxThemeBGImageSelectorButtons {
+    @apply flex
+}
+.textboxThemeBGImageSelectorParent::-webkit-scrollbar {
+    width: 10px;
+}
+.textboxThemeBGImageSelectorParent::-webkit-scrollbar-thumb {
+    background: rgba(70, 70, 70, 0.4);
+}
+.confirmModalParent {
+    animation: confirmModalParent 0.6s;
+}
+@keyframes confirmModalParent {
+    from {
+        @apply opacity-0;
+    }
+}
+.confirmModal {
+    animation: confirmModal 0.6s;
+}
+@keyframes confirmModal {
+    from {
+        @apply -translate-y-6 opacity-0;
+    }
+}

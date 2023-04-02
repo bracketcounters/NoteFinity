@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../../../assets/css/style.css" />
+    <title>Textbox Panel</title>
+  </head>
+  <body class="select-none bg-gray-100 overflow-hidden">
+
+    <div class="container p-3">
+        <div class="flex justify-between items-center mt-2 mb-3">
+            <h3 class="text-sm">Choose Theme</h3>
+            <select id="themeSelector" class="w-64 rounded outline-none p-0.5 cursor-pointer text-sm">
+                <option value="ambiance">Ambiance</option>
+                <option value="chaos">Chaos</option>
+                <option value="chrome" selected>Chrome</option>
+                <option value="clouds">Clouds</option>
+                <option value="clouds_midnight">Clouds Midnight</option>
+                <option value="cobalt">Cobalt</option>
+                <option value="crimson_editor">Crimson Editor</option>
+                <option value="dawn">Dawn</option>
+                <option value="dracula">Dracula</option>
+                <option value="dreamweaver">Dreamweaver</option>
+                <option value="eclipse">Eclipse</option>
+                <option value="github">Github</option>
+                <option value="gob">Gob</option>
+                <option value="gruvbox">Gruvbox</option>
+                <option value="idle_fingers">Idle Fingers</option>
+                <option value="iplastic">Iplastic</option>
+                <option value="katzenmilch">Katzenmilch</option>
+                <option value="kr_theme">Kr Theme</option>
+                <option value="kuroir">Kuroir</option>
+                <option value="merbivore">Merbivore</option>
+                <option value="merbivore_soft">Merbivore Soft</option>
+                <option value="mono_industrial">Mono Industrial</option>
+                <option value="monokai">Monokai</option>
+                <option value="pastel_on_dark">Pastel on Dark</option>
+                <option value="solarized_dark">Solarized Dark</option>
+                <option value="solarized_light">Solarized Light</option>
+                <option value="sqlserver">Sqlserver</option>
+                <option value="terminal">Terminal</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="tomorrow_night">Tomorrow Night</option>
+                <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+                <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
+                <option value="tomorrow_night_eighties">Tomorrow Night Eighties</option>
+                <option value="twilight">Twilight</option>
+                <option value="vibrant_ink">Vibrant Ink</option>
+                <option value="xcode">Xcode</option>
+            </select>
+        </div>
+        <div class="mt-5 mb-3">
+            <div class="flex justify-between">
+                <h3 class="text-sm">Background Image</h3>
+                <div class="flex items-center space-x-1" id="gridImageBox">
+                    <input type="checkbox" id="gridImage" checked>
+                    <label for="gridImage" class="text-xs">Show Grids</label>
+                </div>
+            </div>
+            <div class="h-[23rem]">
+                <div class="flex flex-wrap my-2 max-h-[23rem] overflow-auto textboxThemeBGImageSelectorParent" id="textboxThemeBGImageSelectorParent">
+
+                </div>
+            </div>
+
+            <button class="bg-blue-600 border-b-4 text-sm border-b-blue-800 px-2 py-1 rounded text-white outline-none mt-3 active:border-b-2 active:translate-y-0.5" onclick="textBoxAddImageAction()">Add Image</button>
+        </div>
+    </div>
+
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+        const { ipcRenderer } = require("electron");
+        
+        let themeData = localStorage.getItem("activeTextBoxTheme");
+        if (themeData != null) {
+            themeData = JSON.parse(themeData);
+            _id("themeSelector").value = themeData.theme;
+            _id("gridImage").checked = themeData.grid;
+        }
+
+        _id("themeSelector").addEventListener("change", (e)=>{
+            let data = {
+                theme: _id("themeSelector").value,
+                image: false,
+                grid: false,
+            }
+            localStorage.setItem("activeTextBoxTheme", JSON.stringify(data));
+            ipcRenderer.send("check-textbox-theme", true);
+
+            if (_id("themeSelector").value != "chrome") {
+                _id("gridImageBox").classList.add("invisible");
+            }
+
+        })
+
+        function textBoxAddImageAction() {
+            ipcRenderer.send("add-textbox-image-action", true);
+        }
+        
+        function refreshTextBoxImages() {
+            ipcRenderer.send("refresh-textbox-images", true);
+        }
+        refreshTextBoxImages();
+
+        ipcRenderer.on("back-textbox-image-action", (event, data)=>{
+            refreshTextBoxImages();
+        })
+
+        ipcRenderer.on("back-refresh-textbox-images", (event, data)=>{
+            data.unshift("../../../assets/images/background-gradient.png");
+            _id("textboxThemeBGImageSelectorParent").innerHTML = ""
+            data.forEach(element => {
+                let deleteButtonExtraClass = "";
+                if (element.startsWith("../")) {
+                    deleteButtonExtraClass = "pointer-events-none opacity-75";
+                }
+                _id("textboxThemeBGImageSelectorParent").innerHTML += `<div class="relative w-20 h-16 rounded overflow-hidden mr-2 mb-2 textboxThemeBGImageSelector">
+                    <img src="${element}" class="w-full h-full object-cover textboxThemeBGImage" draggable="false" alt="">
+                    <div class="absolute w-full h-full inset-0 bg-[#1f293780] hidden flex-col justify-center items-center textboxThemeBGImageSelectorButtons">
+                        <button class="px-2 py-1 w-16 text-white text-xs outline-none rounded bg-green-600 mb-1" onclick="applyTextBoxImage(this.parentNode.parentNode.getElementsByClassName('textboxThemeBGImage')[0].src)">Apply</button>
+                        <button class="px-2 py-1 w-16 text-white text-xs outline-none rounded bg-red-600 ${deleteButtonExtraClass}" onclick="deleteTextBoxImage(this.parentNode.parentNode.getElementsByClassName('textboxThemeBGImage')[0].src)">Delete</button>
+                    </div>
+                </div>`;
+            });
+        })
+
+        function applyTextBoxImage(imageFile) {
+            if (_id("themeSelector").value !== "chrome") {
+                confirmModal("Background image needs Chrome theme. Switch?").then(response=>{
+                    if (response) {
+                        _id("themeSelector").value = "chrome";
+                        _id("gridImageBox").classList.remove("invisible");
+                        applyTextBoxImage(imageFile);
+                    }
+                    else {
+                        return;
+                    }
+                })
+            }
+            else {
+                let data = {
+                    theme: _id("themeSelector").value,
+                    image: imageFile,
+                    grid: _id("gridImage").checked,
+                }
+                _id("gridImageBox").classList.remove("invisible");
+                localStorage.setItem("activeTextBoxTheme", JSON.stringify(data));
+                ipcRenderer.send("check-textbox-theme", true);
+            }
+        }
+        function deleteTextBoxImage(imageFile) {
+            ipcRenderer.send("delete-textbox-image", imageFile.toString());
+        }
+        ipcRenderer.on("delete-textbox-image-done", (event, data)=>{
+            if (data) {
+                refreshTextBoxImages();
+            }
+        })
+
+        _id("gridImage").addEventListener("change", (e)=>{
+            let themeData = localStorage.getItem("activeTextBoxTheme");
+            if (themeData != null) {
+                themeData = JSON.parse(themeData);
+                let data = {
+                    image: themeData.image,
+                    theme: themeData.theme,
+                    grid: _id("gridImage").checked,
+                }
+                localStorage.setItem("activeTextBoxTheme", JSON.stringify(data));
+                ipcRenderer.send("check-textbox-theme", true);
+            }
+            else {
+                let data = {
+                    image: "../../assets/images/background-gradient.png",
+                    theme: "chrome",
+                    grid: _id("gridImage").checked,
+                }
+                localStorage.setItem("activeTextBoxTheme", JSON.stringify(data));
+                ipcRenderer.send("check-textbox-theme", true);
+            }
+        })
+
+      window.addEventListener("keydown", (e) => {
+        if (e.altKey) {
+            e.preventDefault();
+        }
+        if (e.keyCode == 27) {
+          window.close();
+        }
+      });
+    </script>
+  </body>
+</html>

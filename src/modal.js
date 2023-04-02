@@ -22,7 +22,8 @@ class Modal {
             icon: "assets/icons/notefinity.png",
             webPreferences: {
                 nodeIntegration: true,
-                contextIsolation: false
+                contextIsolation: false,
+                // devTools: false
             }
         })
         modal.loadFile(this.htmlfile);
