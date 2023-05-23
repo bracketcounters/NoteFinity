@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Notification } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
@@ -27,7 +27,7 @@ function createWindow() {
         }
     })
     win.loadFile("src/pages/index.html");
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
     windowState.manage(win);
     ipcMain.on("appAction", (event, data)=>{
         if (data == "maximize") {
@@ -59,7 +59,7 @@ function randomString(length) {
 
   function extensionOf(filename) {
     const parts = filename.split('.');
-    if (parts.length === 1) {
+    if (parts.length == 1) {
       return '';
     }
     return parts.pop();
@@ -155,7 +155,68 @@ ipcMain.on("delete-textbox-image", (event, data)=>{
 
 })
 
+
+
+ipcMain.on("getFileContents", (event, data)=>{
+    let textContents = "";
+    try {
+        textContents = fs.readFileSync(data, "utf8");
+    }
+    catch(err) {
+        textContents = ""
+    }
+    let backData = {
+        filepath: data,
+        contents: textContents
+    }
+    event.reply("back-getFileContents", backData);
+})
+
+ipcMain.on("fileAction", (event, data)=>{
+    if (data == "newfile") {
+        // dialog.showSaveDialog("Error", "404");
+    }
+    if (data == "openfile") {
+        dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [
+                { name: 'File', extensions: ["html", "htm", "shtml", "xhtml", "xml", "json", "md", "markdown", "yaml", "yml", "csv", "tsv", "sql", "php", "rb", "java", "py", "pl", "swift", "kt", "dart", "c", "h", "cpp", "cc", "cxx", "h", "hh", "hpp", "hxx", "cs", "fs", "fsi", "fsx", "go", "rs", "scala", "lua", "m", "mm", "perl", "sh", "bash", "zsh", "fish", "ps1", "psm1", "psd1", "tex", "txt", "log", "cfg", "ini", "conf", "plist", "bat", "cmd", "js", "css", "npmignore", "gitignore"] }
+              ]
+        }).then(result=>{
+            if (!result.canceled) {
+                let filePath = result.filePaths[0];
+                event.reply("back-openFile", filePath);
+            }
+        }).catch(err=>{
+    
+        })
+    }
+})
+
+
 app.on("ready", ()=>{
     createWindow();
+
+    /*
+    const { Notification } = require("electron");
+
+    const NOTIFICATION_TITLE = "Basic Notification";
+    const NOTIFICATION_BODY = "Notification from the Main process";
+
+    const notification = new Notification({
+    title: NOTIFICATION_TITLE,
+    body: NOTIFICATION_BODY,
+    // icon: "assets/icons/notefinity.png",
+    });
+
+
+    notification.show();
+
+
+    notification.on("click", (event, index)=>{
+        console.log("Hello, world");
+    })    
+
+    */
 })
 
