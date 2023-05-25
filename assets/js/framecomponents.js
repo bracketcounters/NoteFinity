@@ -49,7 +49,7 @@ const actionPanes = [
 
 const alignments = {
         nba: `
-        <div class="logo text-sm flex items-center"><img class="w-4 h-4 mr-1.5 object-cover" src="../../assets/icons/notefinity.png"><span id="fileModifiedStar">*</span>Untitled - NoteFinity
+        <div class="logo text-sm flex items-center"><img class="w-4 h-4 mr-1.5 object-cover" src="../../assets/icons/notefinity.png"><span id="fileNoteFinityStatus">Untitled-1</span><pre> - </pre>NoteFinity
             </div>
             
             <div id="appActionPane">
@@ -61,7 +61,7 @@ const alignments = {
         <div id="appActionPane" style="transform: rotateY(180deg);">
             
         </div>
-        <div class="logo text-sm flex items-center mr-10"><span id="fileModifiedStar">*</span>Untitled - NoteFinity
+        <div class="logo text-sm flex items-center mr-10"><span id="fileNoteFinityStatus">Untitled</span><pre> - </pre>NoteFinity
         </div>
 
         <div></div>

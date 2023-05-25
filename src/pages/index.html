@@ -63,16 +63,21 @@
             <li class="navlist-item">
                 <span>Edit</span>
                 <ul class="navlist-sublist w-32">
-                    <li>Undo (Ctrl+Z)</li>
-                    <li>Redo (Ctrl+Y)</li>
+                    <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo (Ctrl+Z)</li>
+                    <li onclick="notefinity.aceEditors[notefinity.activatedEditor].redo()">Redo (Ctrl+Y)</li>
                     <li>Time/Date (F5)</li>
                 </ul>
             </li>
-            <li class="navlist-item"><span>View</span></li>
+            <li class="navlist-item">
+                <span>View</span>
+                <ul class="navlist-sublist w-32">
+                    <li onclick="toggleWordWrap()">Word Wrap</li>
+                </ul>
+            </li>
             <li class="navlist-item">
                 <span>Options</span>
                 <ul class="navlist-sublist w-32">
-                    <li>Change Language</li>
+                    <li>Programming Language</li>
                     <li>Encrypt File</li>
                 </ul>
             </li>
@@ -105,8 +110,9 @@
         const fdb = new IndexedDBDatabase("filestore");
         const objectStore = "filestore";
         fdb.objectStore = objectStore;
-        fdb.createObjectStore(objectStore, "sno", true, {
+        fdb.createObjectStore(objectStore, "sno", false, {
             filepath: "",
+            contents: null,
         }, null).then(response=>{
             fdb.delete(1);
         });
@@ -127,6 +133,17 @@
             constructor() {
                 this.updateEditorElements();
                 this.aceEditors = [];
+                this.activatedEditor = 0;
+                this.wordWrap = true;
+                this.untitledCount = 0;
+                let notedata = localStorage.getItem("notedata");
+                if (notedata == null) {
+                    this.noteData = [];
+                }
+                else {
+                    this.noteData = JSON.parse(notedata);
+                }
+                
             }
             initiate() {
                 this.aceEditors = [];
@@ -134,10 +151,15 @@
                     let editor = ace.edit(element, {
                         theme: "ace/theme/chrome",
                         fontSize: "16px",
-                        mode: "ace/theme/text",
                         showPrintMargin: false,
                     });
                     this.aceEditors.push(editor);
+                    editor.session.setUseWrapMode(this.wordWrap);
+                    setTimeout(() => {
+                        editor.addEventListener("input", ()=>{
+                            fileChangeReflected(this.activatedEditor);
+                        })
+                    }, 200);
                 })
             }
             updateEditorElements() {
@@ -145,15 +167,36 @@
                 this.initiate();
             }
 
-            add(text="", filename="Untitled", mode="text") {
+            add(text="", filepath=null, mode="text") {
                 let div = document.createElement("div");
                 div.setAttribute("class", "editor absolute w-full top-14 bottom-7 left-0 right-0 outline-0");
                 _id("editorList").appendChild(div);
                 this.updateEditorElements();
 
+                let filename = "Untitled";
+                let insertNoteData = {
+                    "filepath": null,
+                    "contents": "",
+                    "changes": false,
+                }
+                if (filepath == null) {
+                    filename = "Untitled";
+                    this.untitledCount++;
+                } else {
+                    filename = filenameOf(filepath);
+                    insertNoteData.filepath = filepath;
+                    insertNoteData.contents = text;
+                }
+                this.noteData.push(insertNoteData);
+
                 let tabitem = document.createElement("div");
                 tabitem.setAttribute("class", "tabitem");
-                tabitem.innerHTML = `${filename} <span onclick="tabitemClose(${this.editorElements.length-1}, this)" class="tabitem-close">&times;</span></div>`;
+                if (filepath == null) {
+                    tabitem.innerHTML = `<span class="tabitem-star hidden">*</span> <span class="tabitem-filename">${filename}-${this.untitledCount}</span> <span onclick="tabitemClose(${this.editorElements.length-1})" class="tabitem-close">&times;</span></div>`;
+                }
+                else {
+                    tabitem.innerHTML = `<span class="tabitem-star hidden">*</span> <span class="tabitem-filename">${filename}</span> <span onclick="tabitemClose(${this.editorElements.length-1})" class="tabitem-close">&times;</span></div>`;
+                }
 
                 let tabitemListen = document.querySelectorAll(".tabitem").length;
                 
@@ -171,6 +214,7 @@
             }
             
             activateTab(index) {
+                this.activatedEditor = index;
                 this.editorElements.forEach(element=>{
                     element.style.display = "none";
                 })
@@ -183,11 +227,20 @@
                 document.querySelectorAll(".tabitem")[index].classList.add("tabitem-active");
                 refreshTheme();
                 this.aceEditors[index].focus();
+                try {
+                    let star = "";
+                    if (_cls("tabitem-filename")[index].parentElement.getElementsByClassName("tabitem-star")[0].className.indexOf("hidden") == -1) {
+                        star = "*";
+                    }
+                    _id("fileNoteFinityStatus").innerHTML = star + _cls("tabitem-filename")[index].innerHTML;
+                }
+                catch(err) {}
             }
 
         }
 
         const notefinity = new Editor();
+
         if (document.querySelectorAll(".tabitem").length <= 0) {
             notefinity.add();
         }
@@ -196,7 +249,12 @@
         const {ipcRenderer} = require("electron");
 
         function appAction(action) {
-            ipcRenderer.send("appAction", action);
+            if (action == "exit") {
+                ipcRenderer.send("appAction", action);
+            }
+            else {
+                ipcRenderer.send("appAction", action);
+            }
         }
 
         document.addEventListener("keydown", function(event) {
@@ -214,6 +272,10 @@
             }
             if (event.ctrlKey && event.key == "w") {
                 event.preventDefault();
+                tabitemClose(notefinity.activatedEditor);
+            }
+            if (event.ctrlKey && event.key == "Tab") {
+                console.log("CTRL+Tab Pressed");
             }
         });
 
@@ -350,38 +412,91 @@
             notefinity.add();
         }
 
-        function tabitemClose(index, element) {
-            console.log(index);
-            let noteElement = notefinity.editorElements[index];
-            noteElement.remove();
-            element.parentElement.remove();
-            let tabitemCloseIcons = document.querySelectorAll(".tabitem-close");
-
-            for (let i=0; i<tabitemCloseIcons.length; i++) {
-                tabitemCloseIcons[i].setAttribute("onclick", `tabitemClose(${i}, this)`);
+        function tabitemClose(index) {
+            if (notefinity.editorElements.length == 1) {
+                if (_cls("tabitem-star")[0].className.indexOf("hidden") == -1) {
+                    confirmModal("Close without saving? Data will be lost.").then(response=>{
+                        if (response) {
+                            appAction("exit");
+                            notefinity.noteData.splice(index, 1);
+                        }
+                    })
+                }
+                else {
+                    appAction("exit");
+                }
             }
+            else {
+            if (_cls("tabitem-star")[index].className.indexOf("hidden") == -1) {
+                confirmModal("Close without saving? Data will be lost.").then(response=>{
+                    if (response) {
+                        notefinity.noteData.splice(index, 1);
+                        let noteElement = notefinity.editorElements[index];
+                        noteElement.remove();
 
-            let tabitems = document.querySelectorAll(".tabitem");
-            for (let j=0; j<tabitems.length; j++) {
-                tabitems[j].onclick = (event) => {
-                    if (event.target.getAttribute("class") != "tabitem-close") {
-                        notefinity.activateTab(j);
+                        document.querySelectorAll(".tabitem")[index].remove();
+                        let tabitemCloseIcons = document.querySelectorAll(".tabitem-close");
+                        
+                        for (let i=0; i<tabitemCloseIcons.length; i++) {
+                            tabitemCloseIcons[i].setAttribute("onclick", `tabitemClose(${i}, this)`);
+                        }
+                        
+                        let tabitems = document.querySelectorAll(".tabitem");
+                        for (let j=0; j<tabitems.length; j++) {
+                            tabitems[j].onclick = (event) => {
+                                if (event.target.getAttribute("class") != "tabitem-close") {
+                                    notefinity.activateTab(j);
+                                }
+                            }
+                        }
+                        notefinity.updateEditorElements();
+                        try {
+                            tabitems[index-1].click();
+                        }
+                        catch(err) {
+                            try {
+                                tabitems[tabitems.length-1].click();
+                            }
+                            catch(err) {}
+                        }
+                    }
+                    else {
+                        return;
+                    }
+                })
+            }
+            else {
+                notefinity.noteData.splice(index, 1);
+                let noteElement = notefinity.editorElements[index];
+                noteElement.remove();
+
+                document.querySelectorAll(".tabitem")[index].remove();
+                let tabitemCloseIcons = document.querySelectorAll(".tabitem-close");
+                
+                for (let i=0; i<tabitemCloseIcons.length; i++) {
+                    tabitemCloseIcons[i].setAttribute("onclick", `tabitemClose(${i}, this)`);
+                }
+                
+                let tabitems = document.querySelectorAll(".tabitem");
+                for (let j=0; j<tabitems.length; j++) {
+                    tabitems[j].onclick = (event) => {
+                        if (event.target.getAttribute("class") != "tabitem-close") {
+                            notefinity.activateTab(j);
+                        }
                     }
                 }
-            }
-            notefinity.updateEditorElements();
-            try {
-                tabitems[index-1].click();
-            }
-            catch(err) {
+                notefinity.updateEditorElements();
                 try {
-                    tabitems[tabitems.length-1].click();
+                    tabitems[index-1].click();
                 }
-                catch(err) {}
+                catch(err) {
+                    try {
+                        tabitems[tabitems.length-1].click();
+                    }
+                    catch(err) {}
+                }
             }
-            if (notefinity.editorElements.length == 0) {
-                notefinity.add();
-            }
+        }
         }
 
         function fileAction(action) {
@@ -404,13 +519,29 @@
                     languageMode = "text";
                 }
             }
-            notefinity.add(data.contents, filenameOf(data.filepath), languageMode);
-        })
+            notefinity.add(data.contents, data.filepath, languageMode);
+        }) 
 
-
+        function toggleWordWrap() {
+            if (notefinity.wordWrap) {
+                notefinity.wordWrap = false;
+            }
+            else {
+                notefinity.wordWrap = true;
+            }
+            notefinity.updateEditorElements();
+        }
         
+        function fileChangeReflected(index) {
+            _cls("tabitem-star")[index].classList.remove("hidden");
+            try {
+                    _id("fileNoteFinityStatus").innerHTML = "*" + _cls("tabitem-filename")[index].innerHTML;
+                    notefinity.noteData[index].changes = true;
+                }
+            catch(err) {}
+        }
 
-
+    
 
     </script>
 </body>
