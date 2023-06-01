@@ -31,6 +31,13 @@ class Modal {
     close() {
         modal.close();
     }
+    getWebContents() {
+        return new Promise((resolve, reject)=>{
+            setTimeout(() => {
+                resolve(modal.webContents);
+            }, 200);
+        })
+    }
 }
 module.exports = {
     Modal

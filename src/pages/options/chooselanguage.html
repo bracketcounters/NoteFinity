@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Choose Language</title>
+</head>
+<body class="flex justify-center items-center min-h-[80vh]">
+    
+    <form class="w-[90%]" id="languageSelectorForm">
+        <select id="languageSelector" class="border border-sky-400 text-sm w-full rounded cursor-pointer p-0.5 outline-0">
+            <option value="">Default</option>
+        </select>
+    </form>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+
+    const typeObj = {
+    "actionscript": "ActionScript",
+    "ada": "Ada",
+    "apache_conf": "Apache Conf",
+    "apex": "Apex",
+    "applescript": "AppleScript",
+    "asciidoc": "AsciiDoc",
+    "assembly_x86": "x86 Assembly",
+    "autohotkey": "AutoHotkey",
+    "batchfile": "Batchfile",
+    "c_cpp": "C/C++",
+    "clojure": "Clojure",
+    "cobol": "COBOL",
+    "coffee": "CoffeeScript",
+    "coldfusion": "ColdFusion",
+    "csharp": "C#",
+    "css": "CSS",
+    "dart": "Dart",
+    "diff": "Diff",
+    "django": "Django",
+    "dockerfile": "Dockerfile",
+    "dot": "DOT",
+    "elixir": "Elixir",
+    "elm": "Elm",
+    "erlang": "Erlang",
+    "fsharp": "F#",
+    "fortran": "Fortran",
+    "gherkin": "Gherkin",
+    "gitignore": "Gitignore",
+    "glsl": "GLSL",
+    "golang": "Go",
+    "groovy": "Groovy",
+    "haml": "Haml",
+    "handlebars": "Handlebars",
+    "haskell": "Haskell",
+    "haxe": "Haxe",
+    "html": "HTML",
+    "ini": "INI",
+    "jade": "Jade",
+    "java": "Java",
+    "javascript": "JavaScript",
+    "json": "JSON",
+    "jsx": "JSX",
+    "julia": "Julia",
+    "kotlin": "Kotlin",
+    "latex": "LaTeX",
+    "less": "Less",
+    "liquid": "Liquid",
+    "lisp": "Lisp",
+    "livescript": "LiveScript",
+    "lua": "Lua",
+    "lucene": "Lucene",
+    "makefile": "Makefile",
+    "markdown": "Markdown",
+    "matlab": "MATLAB",
+    "mushcode": "MUSHCode",
+    "mysql": "MySQL",
+    "nix": "Nix",
+    "objectivec": "Objective-C",
+    "ocaml": "OCaml",
+    "pascal": "Pascal",
+    "perl": "Perl",
+    "pgsql": "PostgreSQL",
+    "php": "PHP",
+    "powershell": "PowerShell",
+    "praat": "Praat",
+    "prolog": "Prolog",
+    "properties": "Properties",
+    "protobuf": "Protocol Buffers",
+    "python": "Python",
+    "r": "R",
+    "ruby": "Ruby",
+    "rust": "Rust",
+    "scss": "SCSS",
+    "sql": "SQL",
+    "sass": "Sass",
+    "scala": "Scala",
+    "scheme": "Scheme",
+    "sh": "Shell",
+    "smarty": "Smarty",
+    "snippets": "Snippets",
+    "stylus": "Stylus",
+    "svg": "SVG",
+    "swift": "Swift",
+    "tcl": "Tcl",
+    "text": "Text",
+    "textile": "Textile",
+    "toml": "TOML",
+    "typescript": "TypeScript",
+    "twig": "Twig",
+    "vala": "Vala",
+    "vbscript": "VBScript",
+    "velocity": "Velocity",
+    "verilog": "Verilog",
+    "xml": "XML",
+    "yaml": "YAML"
+    };
+
+
+    for (let i in typeObj) {
+        let option = `<option value="${i}">${typeObj[i]}</option>`;
+        _id("languageSelector").innerHTML += option;
+    }
+
+    const {ipcRenderer} = require("electron");
+
+    _id("languageSelector").addEventListener("change", (e)=>{
+        ipcRenderer.send("change-language-mode", _id("languageSelector").value);    
+    })
+
+    ipcRenderer.on("languageData", (event, data)=>{
+        if (data.defaultValue == true || data.defaultValue == "true") {
+            _id("languageSelector").value = "";
+        }
+        else {
+            _id("languageSelector").value = data.mode;
+        }
+    })
+
+        window.addEventListener("keydown", (e) => {
+        if (e.altKey) {
+            e.preventDefault();
+        }
+        if (e.keyCode == 27) {
+          window.close();
+        }
+      });
+    </script>
+</body>
+</html>

@@ -8,24 +8,37 @@
     <style>
         *::-webkit-scrollbar {
             width: 10px;
-            height: 10px;
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
             background: rgba(70, 70, 70, 0.2);
         }
-        /* #editor {
-            background: url(../../assets/images/background-grid.png), url(../../assets/images/background-gradient.png);
-            background-position: center, center;
-            background-size: contain, cover;
-        } */
-/* 		
-        #editor {
-            background: url(../assets/background.png);
-            background-position: center;
-            background-size: cover;
+
+        input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 15px;
+        height: 15px;
+        border: 2px solid #84beff;
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+        /* transition: all 0.1s; */
         }
-		 */
+
+        /* Style the checked state */
+        input[type="checkbox"]:checked {
+        background-color: #84beff;
+        }
+
+        /* Style the label */
+        label {
+        margin-left: 5px;
+        cursor: pointer;
+        }
+
+
     </style>
     <style id="configurableStyle"></style>
     <title>NoteFinity</title>
@@ -41,43 +54,52 @@
                 <ul class="navlist-sublist w-40 ml-1">
                     <li onclick="tabNewFile()">New (Ctrl+N)</li>
                     <li onclick="fileAction('openfile')">Open (Ctrl+O)</li>
-                    <li>Open Folder</li>
-                    <li>Open Recent Files</li>
-                    <li>Save (Ctrl+S)</li>
+                    <li onclick="openFolder()">Open Folder</li>
+                    <li onclick="openModal('openrecent')">Open Recent Files</li>
+                    <li onclick="fileAction('savefile')">Save (Ctrl+S)</li>
                     <li>Save As (Ctrl+Shift+S)</li>
                     <li>Save All</li>
                     <hr>
                     <li>Quick Export</li>
                     <hr>
-                    <li>Rename</li>
+                    <li onclick="renameFile()">Rename</li>
                     <hr>
-                    <li>Close (Ctrl+W)</li>
+                    <li onclick="tabitemClose(notefinity.activatedEditor);">Close (Ctrl+W)</li>
                     <li>Close All</li>
                     <li>Close All but Active Document</li>
                     <li>Close All to the left</li>
                     <li>Close All to the right</li>
                     <hr>
-                    <li>Exit</li>
+                    <li onclick="appAction('exit')">Exit</li>
                 </ul>
             </li>
             <li class="navlist-item">
                 <span>Edit</span>
-                <ul class="navlist-sublist w-32">
+                <ul class="navlist-sublist w-40">
                     <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo (Ctrl+Z)</li>
                     <li onclick="notefinity.aceEditors[notefinity.activatedEditor].redo()">Redo (Ctrl+Y)</li>
-                    <li>Time/Date (F5)</li>
+                    <hr>
+                    <li onclick="reloadFileContents()">Reload (Ctrl+R)</li>
+                    <hr>
+                    <li>Insert</li>
+                    <hr>
+                    <li onclick="convertCaseTo()">Convert Case to</li>
+                    <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
+                    <li onclick="deleteEmptyLines()">Delete Empty Lines</li>
                 </ul>
             </li>
             <li class="navlist-item">
                 <span>View</span>
-                <ul class="navlist-sublist w-32">
-                    <li onclick="toggleWordWrap()">Word Wrap</li>
+                <ul class="navlist-sublist w-36">
+                    <li style="display: flex; justify-content: space-between;" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
+                    <hr>
+                    <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                 </ul>
             </li>
             <li class="navlist-item">
                 <span>Options</span>
-                <ul class="navlist-sublist w-32">
-                    <li>Programming Language</li>
+                <ul class="navlist-sublist w-[9rem]">
+                    <li onclick="openModal('chooselanguage')">Choose Language</li>
                     <li>Encrypt File</li>
                 </ul>
             </li>
@@ -89,7 +111,16 @@
                     <li onclick="openModal('textbox')">Textbox</li>
                 </ul>
             </li>
-            <li class="navlist-item"><span>Help</span></li>
+            <li class="navlist-item">
+                <span>Help</span>
+                <ul class="navlist-sublist w-36">
+                    <li onclick="openAboutNoteFinity()">About NoteFinity</li>
+                    <li>Report a Bug</li>
+                    <hr>
+                    <li onclick="reloadNoteFinity()">Reload</li>
+                    <li onclick="resetNoteFinity()">Reset</li>
+                </ul>
+            </li>
         </ul>
     </header>
     <div id="editorList">
@@ -98,33 +129,46 @@
     <div class="w-full h-7 flex items-start justify-start fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll" id="tabscroll">
         <!-- <div class="tabitem tabitem-active">Untitled <span class="tabitem-close">&times;</span></div> -->
     </div>
+
+
+    <script src="../../assets/js/idb.min.js"></script>
     <script src="../../assets/js/ace.js"></script>
     <script src="../../assets/js/compulsory.js"></script>
     <script src="../../assets/js/framecomponents.js"></script>
     <script src="../../assets/js/themes.js"></script>
     <script src="../../assets/js/htmlrootclasses.js"></script>
-    <script src="../../assets/js/idb.min.js"></script>
     <script src="../../assets/js/extensions.js"></script>
     <script>
     
         const fdb = new IndexedDBDatabase("filestore");
         const objectStore = "filestore";
         fdb.objectStore = objectStore;
-        fdb.createObjectStore(objectStore, "sno", false, {
-            filepath: "",
+        fdb.createObjectStore(objectStore, "sno", true, {
+            filepath: "Untitled",
+            changed: false,
             contents: null,
+            mode: "text",
+            modeChanged: false,
         }, null).then(response=>{
             fdb.delete(1);
         });
+
+        let recentFiles = localStorage.getItem("recentFiles");
+        if (recentFiles == null) {
+            recentFiles = []
+        }
+        else {
+            recentFiles = JSON.parse(recentFiles);
+        }
 
         const tabscroll = document.getElementById("tabscroll");
 
         tabscroll.addEventListener("wheel", (e)=>{
             if (e.deltaY > 0) {
-                tabscroll.scrollLeft += 20;
+                tabscroll.scrollLeft += 40;
             }
             else {
-                tabscroll.scrollLeft -= 20;
+                tabscroll.scrollLeft -= 40;
             }
         })
 
@@ -135,15 +179,7 @@
                 this.aceEditors = [];
                 this.activatedEditor = 0;
                 this.wordWrap = true;
-                this.untitledCount = 0;
-                let notedata = localStorage.getItem("notedata");
-                if (notedata == null) {
-                    this.noteData = [];
-                }
-                else {
-                    this.noteData = JSON.parse(notedata);
-                }
-                
+                this.untitledCount = 0;                
             }
             initiate() {
                 this.aceEditors = [];
@@ -170,24 +206,21 @@
             add(text="", filepath=null, mode="text") {
                 let div = document.createElement("div");
                 div.setAttribute("class", "editor absolute w-full top-14 bottom-7 left-0 right-0 outline-0");
+                div.setAttribute("data-filepath", filepath);
+                div.setAttribute("data-changed", false);
+                div.setAttribute("data-mode", mode);
+
                 _id("editorList").appendChild(div);
                 this.updateEditorElements();
 
                 let filename = "Untitled";
-                let insertNoteData = {
-                    "filepath": null,
-                    "contents": "",
-                    "changes": false,
-                }
                 if (filepath == null) {
                     filename = "Untitled";
                     this.untitledCount++;
+                    div.setAttribute("data-filepath", `${filename}-${this.untitledCount}`);
                 } else {
                     filename = filenameOf(filepath);
-                    insertNoteData.filepath = filepath;
-                    insertNoteData.contents = text;
                 }
-                this.noteData.push(insertNoteData);
 
                 let tabitem = document.createElement("div");
                 tabitem.setAttribute("class", "tabitem");
@@ -211,6 +244,15 @@
                 refreshTextboxTheme();
                 this.aceEditors[this.aceEditors.length-1].insert(text);
                 this.aceEditors[this.aceEditors.length-1].session.setMode(`ace/mode/${mode}`);
+                this.aceEditors[this.aceEditors.length-1].resize();
+            }
+
+            updateEditor(index) {
+                let mode = this.editorElements[index].getAttribute("data-mode");
+                this.aceEditors[index].session.setMode(`ace/mode/${mode}`);
+
+                let filename = filenameOf(this.editorElements[index].getAttribute("data-filepath"));
+                _cls("tabitem-filename")[index].innerHTML = filename;
             }
             
             activateTab(index) {
@@ -220,6 +262,7 @@
                 })
 
                 this.editorElements[index].style.display = "block";
+                notefinity.aceEditors[index].resize();
                 
                 document.querySelectorAll(".tabitem").forEach(element=>{
                     element.classList.remove("tabitem-active");
@@ -227,6 +270,7 @@
                 document.querySelectorAll(".tabitem")[index].classList.add("tabitem-active");
                 refreshTheme();
                 this.aceEditors[index].focus();
+                document.querySelectorAll(".tabitem")[index].focus();
                 try {
                     let star = "";
                     if (_cls("tabitem-filename")[index].parentElement.getElementsByClassName("tabitem-star")[0].className.indexOf("hidden") == -1) {
@@ -241,16 +285,87 @@
 
         const notefinity = new Editor();
 
-        if (document.querySelectorAll(".tabitem").length <= 0) {
-            notefinity.add();
-        }
+        fdb.readAll().then(result=>{
+            let i = 0;
+            let untitledFilePaths = [];
+            result.forEach(data=>{
+                if (data.filepath.toLowerCase() == "untitled") {
+                    return;
+                }
+                notefinity.add(data.contents, data.filepath, data.mode);
+                if (data.changed == true || data.changed == "true") {
+                    fileChangeReflected(i);
+                }
+                if (data.filepath.toLowerCase().startsWith("untitled-")) {
+                    try {
+                        let untitledFilePathCount = parseInt(data.filepath.toLowerCase().substr(9));
+                        untitledFilePaths.push(untitledFilePathCount);
+                    }
+                    catch(err) {}
+                }
+                notefinity.editorElements[i].setAttribute("data-mode-changed", data.modeChanged);
+                i++;
+            });
+
+            if (untitledFilePaths.length > 0) {
+                untitledFilePaths.sort();
+                let lastUntitledFileCount = untitledFilePaths[untitledFilePaths.length-1];
+                notefinity.untitledCount += lastUntitledFileCount;
+            }
+
+            
+
+            if (document.querySelectorAll(".tabitem").length <= 0 || result.length == 0) {
+                notefinity.add();
+            }
+        })
+
 
 
         const {ipcRenderer} = require("electron");
+        const progressView = new ProgressView();
+
+
+        function backUpProcess() {
+            fdb.deleteAllData().then(response=>{
+                for (let i=0; i<notefinity.editorElements.length; i++) {
+                    let insertableData = {
+                        filepath: notefinity.editorElements[i].getAttribute("data-filepath"),
+                        changed: notefinity.editorElements[i].getAttribute("data-changed"),
+                        contents: notefinity.aceEditors[i].getValue(),
+                        mode: notefinity.editorElements[i].getAttribute("data-mode"),
+                        modeChanged: notefinity.editorElements[i].getAttribute("data-mode-changed")
+                    }
+                    fdb.insertData(insertableData);
+                }
+            })
+        }
+
+        setInterval(() => {
+            backUpProcess();
+        }, 10000);
 
         function appAction(action) {
             if (action == "exit") {
-                ipcRenderer.send("appAction", action);
+                fdb.deleteAllData().then(response=>{
+                    for (let i=0; i<notefinity.editorElements.length; i++) {
+                        
+                        let insertableData = {
+                            filepath: notefinity.editorElements[i].getAttribute("data-filepath"),
+                            changed: notefinity.editorElements[i].getAttribute("data-changed"),
+                            contents: notefinity.aceEditors[i].getValue(),
+                            mode: notefinity.editorElements[i].getAttribute("data-mode"),
+                            modeChanged: notefinity.editorElements[i].getAttribute("data-mode-changed")
+                        }
+                        fdb.insertData(insertableData);
+                    }
+                }).then(result=>{
+                    progressView.modal("Quiting...");
+                    setTimeout(() => {
+                        ipcRenderer.send("appAction", action);
+                    }, 800);
+                    
+                })
             }
             else {
                 ipcRenderer.send("appAction", action);
@@ -260,6 +375,11 @@
         document.addEventListener("keydown", function(event) {
             if (event.ctrlKey && event.key === "r") {
                 event.preventDefault();
+                reloadFileContents();
+            }
+            if (event.ctrlKey && event.key == "s") {
+                event.preventDefault();
+                fileAction("savefile")
             }
             if (event.ctrlKey && event.shiftKey && event.key === "s") {
                 event.preventDefault();
@@ -275,13 +395,47 @@
                 tabitemClose(notefinity.activatedEditor);
             }
             if (event.ctrlKey && event.key == "Tab") {
-                console.log("CTRL+Tab Pressed");
+                tablist.list();
+                if (tablist.htmlElement == null) {
+                    tablist.open(notefinity.activatedEditor);
+                }
+                else {
+                    tablist.change();
+                }
             }
         });
 
+        document.addEventListener("keyup", (event)=>{
+            if (event.key == "Control") {
+                tablist.close();
+            }
+            if (event.keyCode == 38) {
+                if (tablist.htmlElement != null) {
+                    tablist.change(0);
+                }
+            }
+            if (event.keyCode == 40) {
+                if (tablist.htmlElement != null) {
+                    tablist.change(1);
+                }
+            }
+        })
+
         function openModal(modal) {
-            // editor.focus();
-            ipcRenderer.send("open-modal", modal);
+            if (modal == "chooselanguage") {
+                let defaultValue = true;
+                if (notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-mode-changed") == "true" || notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-mode-changed") == true) {
+                    defaultValue = false;
+                }
+                let data = {
+                    mode: notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-mode"),
+                    defaultValue: defaultValue
+                }
+                ipcRenderer.send("open-mode-modal", data);
+            }
+            else {
+                ipcRenderer.send("open-modal", modal);
+            }
         }
 
         function extensionOf(filename) {
@@ -305,6 +459,7 @@
 
 
 
+
         function checkCustomizationFrame() {
             let customizationFrameData = localStorage.getItem("customizationNavigation");
 
@@ -321,7 +476,10 @@
             else {
                 getHeader("nba", 3);
             }
-
+            try {
+                notefinity.activateTab(notefinity.activatedEditor);
+            }
+            catch(err) {}
         }
         ipcRenderer.on("check-customization-frame-check", (event, data)=>{
             checkCustomizationFrame();
@@ -412,25 +570,45 @@
             notefinity.add();
         }
 
+        function pushInRecentFiles(index) {
+            if (!notefinity.editorElements[index].getAttribute("data-filepath").toLowerCase().startsWith("untitled-")) {
+                recentFiles.push(notefinity.editorElements[index].getAttribute("data-filepath"));
+                recentFiles = [... new Set(recentFiles)];
+                let recentFilesLimit = 100;
+                if (recentFiles.length > recentFilesLimit) {
+                    let removeCount = recentFiles.length - recentFilesLimit;
+                    recentFiles.splice(0, removeCount);
+                }
+                localStorage.setItem("recentFiles", JSON.stringify(recentFiles));
+            }
+        }
+
         function tabitemClose(index) {
             if (notefinity.editorElements.length == 1) {
                 if (_cls("tabitem-star")[0].className.indexOf("hidden") == -1) {
-                    confirmModal("Close without saving? Data will be lost.").then(response=>{
+                    confirmModal("Close without saving? Unsaved data will be lost.").then(response=>{
                         if (response) {
+                            pushInRecentFiles(index);
+                            let noteElement = notefinity.editorElements[index];
+                            noteElement.remove();
+                            notefinity.updateEditorElements();
                             appAction("exit");
-                            notefinity.noteData.splice(index, 1);
                         }
                     })
                 }
                 else {
+                    pushInRecentFiles(index);
+                    let noteElement = notefinity.editorElements[index];
+                    noteElement.remove();
+                    notefinity.updateEditorElements();
                     appAction("exit");
                 }
             }
             else {
             if (_cls("tabitem-star")[index].className.indexOf("hidden") == -1) {
-                confirmModal("Close without saving? Data will be lost.").then(response=>{
+                confirmModal("Close without saving? Unsaved data will be lost.").then(response=>{
                     if (response) {
-                        notefinity.noteData.splice(index, 1);
+                        pushInRecentFiles(index);
                         let noteElement = notefinity.editorElements[index];
                         noteElement.remove();
 
@@ -466,9 +644,10 @@
                 })
             }
             else {
-                notefinity.noteData.splice(index, 1);
+                pushInRecentFiles(index);
                 let noteElement = notefinity.editorElements[index];
                 noteElement.remove();
+                notefinity.updateEditorElements();
 
                 document.querySelectorAll(".tabitem")[index].remove();
                 let tabitemCloseIcons = document.querySelectorAll(".tabitem-close");
@@ -499,9 +678,79 @@
         }
         }
 
+        class FileSaver {
+            constructor() {
+            }
+            save() {
+                let noteFinityIndex = notefinity.activatedEditor;
+                let filepath = notefinity.editorElements[noteFinityIndex].getAttribute("data-filepath");
+                let contents = notefinity.aceEditors[noteFinityIndex].getValue();
+                if (filepath.toLowerCase().startsWith("untitled-")) {
+                    ipcRenderer.send("fileAction", {
+                        action: "savefile",
+                        type: "untitled",
+                        contents: contents,
+                        index: noteFinityIndex
+                    })
+                }
+                else {   
+                    ipcRenderer.send("fileAction", {
+                        action: "savefile",
+                        type: "manual",
+                        filepath: filepath,
+                        contents: contents,
+                        index: noteFinityIndex
+                    })
+                }
+                
+            }
+        }
+
+        ipcRenderer.on("saveAlert", (event, data)=>{
+            // if (data.success == false) {
+            //     alertModal("Unable to save the file at this location. Please select a different name or directory.", "error");
+            //     return;
+            // }
+            if (data.action == "untitledsave") {
+                if (data.success == "true" || data.success == true) {
+                    notefinity.editorElements[data.index].setAttribute("data-filepath", data.filepath);
+                    
+                    if (notefinity.editorElements[data.index].getAttribute("data-mode-changed") == "true" || notefinity.editorElements[data.index].getAttribute("data-mode-changed") == true) {
+                        notefinity.updateEditor(data.index);
+                        fileSaveReflected(data.index);
+                    }
+                    else {
+                        try {
+                            notefinity.editorElements[data.index].setAttribute("data-mode", extensionModes[extensionOf(data.filepath)]);
+                        } catch(err) {}
+                        notefinity.updateEditor(data.index);
+                        fileSaveReflected(data.index);
+                    }
+                }
+                else {
+                    alertModal("Unable to save the file at this location. Please select a different name or directory.", "error");
+                    return;
+                }
+            }
+            else if (data.action == "manualsave") {
+                if (data.success == true || data.success == "true") {
+                    fileSaveReflected(data.index);
+                }
+                else {
+                    alertModal("Unable to save the file at this location. Please select a different name or directory.", "error");
+                    return;
+                }
+            }
+        })
+
+        const saver = new FileSaver();
+
         function fileAction(action) {
             if (action == "openfile") {
                 ipcRenderer.send("fileAction", "openfile");
+            }
+            if (action == "savefile") {
+                saver.save();
             }
         }
 
@@ -510,6 +759,13 @@
         })
 
         ipcRenderer.on("back-getFileContents", (event, data)=>{
+            for (let i = 0; i<notefinity.editorElements.length; i++) {
+                if (notefinity.editorElements[i].getAttribute("data-filepath") == data.filepath) {
+                    notefinity.activateTab(i);
+                    return;
+                }
+            }
+
             let languageMode = "text";
             try {
                 languageMode = extensionModes[extensionOf(data.filepath)];
@@ -522,11 +778,13 @@
             notefinity.add(data.contents, data.filepath, languageMode);
         }) 
 
-        function toggleWordWrap() {
+        function toggleWordWrap(elm) {
             if (notefinity.wordWrap) {
                 notefinity.wordWrap = false;
+                elm.getElementsByTagName("input")[0].checked = false;
             }
             else {
+                elm.getElementsByTagName("input")[0].checked = true;
                 notefinity.wordWrap = true;
             }
             notefinity.updateEditorElements();
@@ -535,13 +793,284 @@
         function fileChangeReflected(index) {
             _cls("tabitem-star")[index].classList.remove("hidden");
             try {
-                    _id("fileNoteFinityStatus").innerHTML = "*" + _cls("tabitem-filename")[index].innerHTML;
-                    notefinity.noteData[index].changes = true;
-                }
+                _id("fileNoteFinityStatus").innerHTML = "*" + _cls("tabitem-filename")[index].innerHTML;
+                notefinity.editorElements[index].setAttribute("data-changed", true);
+            }
             catch(err) {}
         }
 
+        function fileSaveReflected(index) {
+            _cls("tabitem-star")[index].classList.add("hidden");
+            try {
+                _id("fileNoteFinityStatus").innerHTML = _cls("tabitem-filename")[index].innerHTML;
+                notefinity.editorElements[index].setAttribute("data-changed", false);
+            }
+            catch(err) {}
+        }
+
+        // Reload a file
+        function reloadFileContents() {
+            let index = notefinity.activatedEditor;
+            if (!notefinity.editorElements[index].getAttribute("data-filepath").toLowerCase().startsWith("untitled-")) {
+                let filepath = notefinity.editorElements[index].getAttribute("data-filepath");
+                let data = {
+                    filepath: filepath,
+                    index: index
+                }
+                if (notefinity.editorElements[index].getAttribute("data-changed") == "true") {
+                    confirmModal("Reload the file? Unsaved data will be lost.").then(response=>{
+                        if (response) {
+                            ipcRenderer.send("reloadFileContents", data);
+                        }
+                    })
+                }
+                else {
+                    ipcRenderer.send("reloadFileContents", data);
+                }
+            }
+        }
+        ipcRenderer.on("back-reloadFileContents", (event, data)=>{
+            notefinity.aceEditors[data.index].setValue("");
+            notefinity.aceEditors[data.index].insert(data.contents);
+            setTimeout(() => {
+                fileSaveReflected(data.index);
+            }, 200);
+        })
+
+        // Language changing
+        ipcRenderer.on("back-changed-language-mode", (event, data)=>{
+            if (data == "") {
+
+                let filepath = notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath");
+
+                let languageMode = extensionModes[extensionOf(notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath"))];
+
+                if (filepath.toLowerCase().startsWith("untitled-")) {
+                    languageMode = "text";
+                }
+
+                notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode", languageMode);
+                notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode-changed", false);
+            }
+            else {
+                notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode", data);
+                notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode-changed", true);
+            }
+            notefinity.updateEditor(notefinity.activatedEditor);
+        })
+
+
+
+        class EditTab {
+            constructor() {
+                
+            }
+            selectEditor() {
+                this.editor = notefinity.aceEditors[notefinity.activatedEditor];
+            }
+            getSelection() {
+                this.selection = {
+                    range: this.editor.getSelectionRange(),
+                    text: this.editor.getSelectedText(),
+                }
+                return this.selection;
+            }
+            checkTextSelection(text) {
+                if (text == "" || text == null) {
+                    alertModal("No text selected");
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+            removeUnnecessarySpaces() {
+                this.selectEditor();
+                let selection = this.getSelection();
+                if (this.checkTextSelection(selection.text)) {
+                    let replaceText = selection.text.replace(/\s+/g, " ").trim();
+                    this.editor.session.replace(selection.range, replaceText);
+                }
+            }
+            deleteEmptyLines() {
+                this.selectEditor();
+                let contents = this.editor.getValue();
+                let nonEmptyValue = contents.replace(/^\s*[\r\n]/gm, "");
+                this.editor.setValue(nonEmptyValue);
+            }
+        }
+
+        const editTab = new EditTab();
+        function removeUnnecessarySpaces() {
+            editTab.removeUnnecessarySpaces();
+        }
+        function deleteEmptyLines() {
+            editTab.deleteEmptyLines();
+        }
+
+        class Tablist {
+            constructor() {
+                this.htmlElement = null;
+                this.fileList = [];
+                this.current = 0;
+            }
+            list() {
+                this.fileList = [];
+                notefinity.editorElements.forEach(element=>{
+                    this.fileList.push(filenameOf(element.getAttribute("data-filepath")));
+                });
+            }
+            open(focus=0) {
+            if (this.htmlElement != null) {
+                return;
+            }
+            this.htmlElement = document.createElement("div");
+            this.htmlElement.setAttribute("id", "tabList");
+            this.htmlElement.setAttribute("class", "fixed flex bg-[#00000092] w-full h-full inset-0 z-50 justify-center items-center");
+
+            let buttonHTML = "";
+            this.fileList.forEach(element=>{
+                buttonHTML += `<button class="p-1 outline-0 border-t border-b border-transparent">${element}</button>`;
+            })
+
+            this.htmlElement.innerHTML = `<div class="text-white max-w-[90vw] max-h-[50vh] overflow-auto flex flex-col text-center">
+                    ${buttonHTML}
+                </div>`;
+            document.body.appendChild(this.htmlElement);
+            this.focusOn(focus);
+            this.current = focus;
+            }
+            close() {
+                if (this.htmlElement != null) {
+                    document.body.removeChild(this.htmlElement);
+                    this.htmlElement = null;
+                    notefinity.activateTab(this.current);
+                }
+            }
+            focusOn(index) {
+                let buttonElements = this.htmlElement.childNodes[0].querySelectorAll("button");
+                buttonElements.forEach(element=>{
+                    element.classList.remove("border-white");
+                    element.classList.add("border-transparent");
+                })
+                buttonElements[index].classList.remove("border-transparent");
+                buttonElements[index].classList.add("border-white");
+                buttonElements[index].focus();
+            }
+            change(n=1) {
+                let elmList = this.htmlElement.childNodes[0].getElementsByTagName("button");
+                if (n == 1) {
+                    this.current++;
+                }
+                else {
+                    this.current--;
+                }
+
+                if (this.current >= elmList.length) {
+                    this.current = 0;
+                }
+                else if (this.current < 0) {
+                    this.current = elmList.length-1;
+                }
+
+                this.focusOn(this.current);
+            }
+        }
+
+        const tablist = new Tablist();
+
+        function openFolder() {
+            ipcRenderer.send("openFolder", true);
+        }
+
+        let alwaysOnTop = false;
+        function viewAlwaysOnTop(element) {
+            if (!alwaysOnTop) {
+                ipcRenderer.send("always-on-top", true);
+                alwaysOnTop = true;
+                element.getElementsByTagName("input")[0].checked = true;
+            }
+            else {
+                ipcRenderer.send("always-on-top", false);
+                alwaysOnTop = false;
+                element.getElementsByTagName("input")[0].checked = false;
+            }
+        }
     
+        function resetNoteFinity() {
+            confirmModal("Do you want to reset NoteFinity? This action will delete all customizations, unsaved changes, and the list of recently opened files.").then(response=>{
+                if (response) {
+                    let request = indexedDB.deleteDatabase("filestore");
+                    request.onsuccess = function(event) {
+                        localStorage.clear();
+                    }
+                    request.onerror = function(event) {
+                        return;
+                    };
+                    localStorage.clear();
+                    progressView.modal("Resetting...");
+                    setTimeout(() => {
+                        ipcRenderer.send("appAction", "reload");
+                    }, 1000);
+                }
+            })
+        }
+        function reloadNoteFinity() {
+            backUpProcess();
+            progressView.modal("Please wait...");
+            setTimeout(() => {
+                ipcRenderer.send("appAction", "reload");
+            }, 1000);
+        }
+
+        function openAboutNoteFinity() {
+            ipcRenderer.send("open-web", "https://www.bracketcounters.com");
+        }
+
+        function renameFile() {
+            let index = notefinity.activatedEditor;
+            let editor = notefinity.editorElements[index];
+            let filepath = editor.getAttribute("data-filepath");
+            if (filepath.toLowerCase().startsWith("untitled-")) {
+                alertModal("Cannot rename an untitled file. Save the file first.")
+                return;
+            }
+            else {
+                let defaultFilePath = editor.getAttribute("data-filepath");
+                let defaultFilename = filenameOf(defaultFilePath);
+                promptModal(prompt="Enter filename", defaultValue=defaultFilename).then(response=>{
+                    console.log(response);
+                    if (response != false && response != defaultFilename) {
+                        progressView.loader();
+                        let data = {
+                            action: "renameFile",
+                            filepath: defaultFilePath,
+                            renameTo: response,
+                            index: index
+                        }
+                        ipcRenderer.send("fileAction", data);
+                    }
+                });
+            }
+        }
+
+        ipcRenderer.on("rename-response", (event, data)=>{
+            progressView.close();
+            if (data.success == true) {
+                let editor = notefinity.editorElements[data.index];
+                editor.setAttribute("data-filepath", data.filepath);
+                if (editor.getAttribute("data-mode-changed") == true || editor.getAttribute("data-mode-changed") == "true") {
+                }
+                else {
+                    editor.setAttribute("data-mode", extensionModes[extensionOf(data.filepath)]);   
+                }
+                notefinity.updateEditor(data.index);
+                notefinity.activateTab(notefinity.activatedEditor);
+            }
+            else {
+                alertModal("Unable to rename this file", "error");
+            }
+        })
 
     </script>
 </body>

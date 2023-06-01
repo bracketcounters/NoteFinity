@@ -1,9 +1,10 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
 const fs = require("fs");
 const path = require("path");
+const { exec } = require("child_process");
 
 let win;
 function createWindow() {
@@ -44,6 +45,10 @@ function createWindow() {
         else if (data == "exit") {
             app.quit();
         }
+        else if (data == "reload") {
+            app.relaunch();
+            app.quit();
+        }
     })
 }
 
@@ -81,11 +86,26 @@ ipcMain.on("open-modal", (event, data)=>{
         case "textbox":
             let modalTextbox = new Modal(400, 550, win, "src/pages/customizations/textbox.html", false);
             modalTextbox.open();
+            break;
+        
+        case "openrecent":
+            let modalRecentFiles = new Modal(350, 500, win, "src/pages/file-actions/recentfiles.html", true);
+            modalRecentFiles.open();
+            break;
 
         default:
             break;
     }
 })
+
+ipcMain.on("open-mode-modal", (event, data)=>{
+    let modalLanguage = new Modal(320, 200, win, "src/pages/options/chooselanguage.html", true);
+    modalLanguage.open();
+    modalLanguage.getWebContents().then(response=>{
+        response.send("languageData", data);
+    })
+})
+
 
 ipcMain.on("check-customization-frame", (event, data)=>{
     win.webContents.send("check-customization-frame-check", true);
@@ -169,18 +189,35 @@ ipcMain.on("getFileContents", (event, data)=>{
         filepath: data,
         contents: textContents
     }
-    event.reply("back-getFileContents", backData);
+    win.webContents.send("back-getFileContents", backData);
 })
 
-ipcMain.on("fileAction", (event, data)=>{
-    if (data == "newfile") {
-        // dialog.showSaveDialog("Error", "404");
+ipcMain.on("reloadFileContents", (event, data)=>{
+    let textContents = "";
+    try {
+        textContents = fs.readFileSync(data.filepath, "utf8");
     }
+    catch(err) {
+        textContents = ""
+    }
+    let backData = {
+        index: data.index,
+        contents: textContents
+    }
+    event.reply("back-reloadFileContents", backData);
+})
+
+let supportedExtensions = [ "txt", "html", "htm", "shtml", "xhtml", "xml", "json", "md", "markdown", "yaml", "yml", "csv", "tsv", "sql", "php", "rb", "java", "py", "pl", "swift", "kt", "dart", "c", "h", "cpp", "cc", "cxx", "h", "hh", "hpp", "hxx", "cs", "fs", "fsi", "fsx", "go", "rs", "scala", "lua", "m", "mm", "perl", "sh", "bash", "zsh", "fish", "ps1", "psm1", "psd1", "tex", "log", "cfg", "ini", "conf", "plist", "bat", "cmd", "js", "css", "npmignore", "gitignore", "svg"];
+
+ipcMain.on("fileAction", (event, data)=>{
     if (data == "openfile") {
         dialog.showOpenDialog({
             properties: ['openFile'],
             filters: [
-                { name: 'File', extensions: ["html", "htm", "shtml", "xhtml", "xml", "json", "md", "markdown", "yaml", "yml", "csv", "tsv", "sql", "php", "rb", "java", "py", "pl", "swift", "kt", "dart", "c", "h", "cpp", "cc", "cxx", "h", "hh", "hpp", "hxx", "cs", "fs", "fsi", "fsx", "go", "rs", "scala", "lua", "m", "mm", "perl", "sh", "bash", "zsh", "fish", "ps1", "psm1", "psd1", "tex", "txt", "log", "cfg", "ini", "conf", "plist", "bat", "cmd", "js", "css", "npmignore", "gitignore"] }
+                { 
+                    name: 'Text File', 
+                    extensions: supportedExtensions
+                }
               ]
         }).then(result=>{
             if (!result.canceled) {
@@ -191,32 +228,175 @@ ipcMain.on("fileAction", (event, data)=>{
     
         })
     }
+    else if (typeof(data) == "object") {
+        if (data.action == "savefile") {
+            if (data.type == "untitled") {
+                dialog.showSaveDialog({
+                    filters: [
+                        {
+                            name: "Text File",
+                            extensions: supportedExtensions,
+                        }
+                    ]
+                }).then(result=>{
+                    if (!result.canceled) {
+                        fs.writeFile(result.filePath, data.contents, (err)=>{
+                            if (err) {
+                                let returnData = {
+                                    action: "untitledsave",
+                                    success: false,
+                                }
+                                win.webContents.send("saveAlert", returnData);
+                            }
+                            else {
+                                let returnData = {
+                                    action: "untitledsave",
+                                    success: true,
+                                    filepath: result.filePath,
+                                    index: data.index
+                                }
+                                win.webContents.send("saveAlert", returnData);
+                            }
+                        })
+                    }
+                }).catch(err=>{
+
+                })
+            }
+            else if (data.type == "manual") {
+                fs.writeFile(data.filepath, data.contents, (err)=>{
+                    let returnData = {}
+                    if (err) {
+                        returnData = {
+                            action: "manualsave",
+                            success: false,
+                        }
+                    }
+                    else {
+                        returnData = {
+                            action: "manualsave",
+                            success: true,
+                            index: data.index
+                        }
+                    }
+                    win.webContents.send("saveAlert", returnData);
+                })
+            }
+        }
+        else if (data.action == "renameFile") {
+            let renameTo = path.join(path.dirname(data.filepath), data.renameTo);
+            fs.rename(data.filepath, renameTo, (err)=>{
+                let returnData = {
+                    success: false,
+                    index: data.index
+                }
+                if (err) {
+                    returnData.reason = err;
+                    event.reply("rename-response", returnData);
+                }
+                else {
+                    returnData.success = true;
+                    returnData.filepath = renameTo
+                    event.reply("rename-response", returnData);
+                }
+            })
+        }
+    }
+})
+
+ipcMain.on("change-language-mode", (event, data)=>{
+    win.webContents.send("back-changed-language-mode", data);
 })
 
 
-app.on("ready", ()=>{
-    createWindow();
+ipcMain.on("openFolder", (event, data)=>{
+    dialog.showOpenDialog({
+        properties: ['openDirectory'],
+    }).then(result=>{
+        if (!result.canceled) {
+            try {
+                let folder = result.filePaths[0]
+                backOpenFolder(folder);
+            }
+            catch(err) {}
+        }
+    })
+})
 
-    /*
-    const { Notification } = require("electron");
+function extensionOf(filename) {
+    const parts = filename.split('.');
+    if (parts.length == 1) {
+    return '';
+    }
+    return parts.pop();
+}
 
-    const NOTIFICATION_TITLE = "Basic Notification";
-    const NOTIFICATION_BODY = "Notification from the Main process";
-
-    const notification = new Notification({
-    title: NOTIFICATION_TITLE,
-    body: NOTIFICATION_BODY,
-    // icon: "assets/icons/notefinity.png",
+function backOpenFolder(folder) {
+    let scanned = fs.readdirSync(folder);
+    let filelist = [];
+    scanned.forEach(element => {
+        let fileFolder = folder + "\\" + element;
+        try {
+            let stat = fs.statSync(fileFolder);
+            if (stat.isFile() && supportedExtensions.indexOf(extensionOf(fileFolder)) != -1) {
+                filelist.push(fileFolder);
+            }
+        }
+        catch(err) {}
+        
     });
 
 
-    notification.show();
-
-
-    notification.on("click", (event, index)=>{
-        console.log("Hello, world");
-    })    
-
+    /*
+       try {
+        textContents = fs.readFileSync(data, "utf8");
+    }
+    catch(err) {
+        textContents = ""
+    }
+    let backData = {
+        filepath: data,
+        contents: textContents
+    }
     */
+    filelist.forEach(element => {
+        let textcontents = "";
+        fs.readFile(element, "utf8", (err, data)=>{
+            let backData = {
+                filepath: element,
+                contents: ""
+            }
+            if (err) {
+            }
+            else {
+                backData.contents = data;
+            }
+            win.webContents.send("back-getFileContents", backData);
+        })          
+    });
+    
+}
+
+ipcMain.on("always-on-top", (event, data)=>{
+    if (data == true) {
+        win.setAlwaysOnTop(true);
+    }
+    else {
+        win.setAlwaysOnTop(false);
+    }
+})
+
+function openWeb(url) {
+    exec(`start ${url}`, (error, stdout, stderr)=>{
+        return;
+    })
+}
+
+ipcMain.on("open-web", (even, url)=>{
+    openWeb(url);
+})
+
+app.on("ready", ()=>{
+    createWindow();
 })
 
