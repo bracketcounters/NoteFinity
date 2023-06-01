@@ -11,6 +11,14 @@ function _elms(elms) {
     return document.querySelectorAll(elms);
 }
 
+function extensionOf(filename) {
+    const parts = filename.split('.');
+    if (parts.length == 1) {
+    return '';
+    }
+    return parts.pop();
+}
+
 function confirmModal(message="Are you sure?") {
     let element = document.createElement("div");
     element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 confirmModalParent");
@@ -84,7 +92,7 @@ function alertModal(message="Alert", type="info") {
     })
 }
 
-function promptModal(prompt="Enter value", defaultValue="") {
+function promptModal(prompt="Enter value", defaultValue="", type=null) {
     let element = document.createElement("div");
     element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 promptParent");
 
@@ -97,8 +105,16 @@ function promptModal(prompt="Enter value", defaultValue="") {
     </div>
 </form>`;
     document.body.appendChild(element);
-    _id("promptInput").focus();
-    _id("promptInput").select();
+    if (type == "rename") {
+        let selectionValue = _id("promptInput").value;
+        let endRange = selectionValue.substr(0, selectionValue.length - extensionOf(selectionValue).length - 1);
+        _id("promptInput").setSelectionRange(0, endRange.length);
+        _id("promptInput").focus();
+    }
+    else {
+        _id("promptInput").select();
+        _id("promptInput").focus();
+    }
     window.addEventListener("keydown", (e)=>{
         if (e.key == "Escape") {
             try {document.body.removeChild(element);} catch(err){}

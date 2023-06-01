@@ -438,14 +438,6 @@
             }
         }
 
-        function extensionOf(filename) {
-            const parts = filename.split('.');
-            if (parts.length == 1) {
-            return '';
-            }
-            return parts.pop();
-        }
-
         function filenameOf(filepath) {
             let parts = filepath.split("/");
             if (filepath.indexOf("\\") != -1) {
@@ -1038,8 +1030,7 @@
             else {
                 let defaultFilePath = editor.getAttribute("data-filepath");
                 let defaultFilename = filenameOf(defaultFilePath);
-                promptModal(prompt="Enter filename", defaultValue=defaultFilename).then(response=>{
-                    console.log(response);
+                promptModal(prompt="Enter filename", defaultValue=defaultFilename, type="rename").then(response=>{
                     if (response != false && response != defaultFilename) {
                         progressView.loader();
                         let data = {
