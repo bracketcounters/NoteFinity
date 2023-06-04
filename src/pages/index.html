@@ -38,9 +38,18 @@
         cursor: pointer;
         }
 
+        @font-face {
+            font-family: "Custom";
+            src: url('C:/Users/pptec/AppData/Local/NoteFinity/user-fonts/WorkSpaceRegular-w18Bw.ttf');
+        }
+        /* .editor {
+            font-family: "Custom";
+        } */
+        
 
     </style>
     <style id="configurableStyle"></style>
+    <style id="configurableFont"></style>
     <title>NoteFinity</title>
 </head>
 <body class="rounded-md select-none">
@@ -94,6 +103,7 @@
                     <li style="display: flex; justify-content: space-between;" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
+                    <hr>
                 </ul>
             </li>
             <li class="navlist-item">
@@ -109,6 +119,7 @@
                     <li onclick="openModal('frame')">Frame</li>
                     <li onclick="openModal('theme')">Theme</li>
                     <li onclick="openModal('textbox')">Textbox</li>
+                    <li onclick="openModal('fonts')">Fonts</li>
                 </ul>
             </li>
             <li class="navlist-item">
@@ -242,6 +253,7 @@
                 _id("tabscroll").appendChild(tabitem);
                 tabitem.click();
                 refreshTextboxTheme();
+                refreshFont();
                 this.aceEditors[this.aceEditors.length-1].insert(text);
                 this.aceEditors[this.aceEditors.length-1].session.setMode(`ace/mode/${mode}`);
                 this.aceEditors[this.aceEditors.length-1].resize();
@@ -402,6 +414,10 @@
                 else {
                     tablist.change();
                 }
+            }
+            if (event.altKey && event.key == "F4") {
+                event.preventDefault();
+                appAction("exit");
             }
         });
 
@@ -747,7 +763,7 @@
         }
 
         ipcRenderer.on("back-openFile", (event, data)=>{
-            ipcRenderer.send("getFileContents", data);
+            
         })
 
         ipcRenderer.on("back-getFileContents", (event, data)=>{
@@ -1062,6 +1078,48 @@
                 alertModal("Unable to rename this file", "error");
             }
         })
+
+
+        let filedragger = new FileDragger();
+
+        window.addEventListener("dragover", (event)=>{
+            event.preventDefault();
+            filedragger.open().then(response=>{
+                response.forEach(file=>{
+                    ipcRenderer.send("getFileContents", file.path);
+                })
+            })
+        });
+
+
+        function refreshFont() {
+            let fontData = localStorage.getItem("fontData");
+            if (fontData == null) {
+                fontData = {
+                    size: 16,
+                    weight: 4,
+                    italic: false,
+                }
+            }
+            else {
+                fontData = JSON.parse(fontData);
+            }
+            notefinity.aceEditors.forEach(editor=>{
+                editor.setFontSize(`${fontData.size}px`);
+            })
+            let fontStyleCSS = "";
+            if (fontData.italic) {
+                fontStyleCSS = "font-style: italic;"
+            }
+            _id("configurableFont").innerHTML = `.editor {
+                font-weight: ${fontData.weight * 100};
+                ${fontStyleCSS}
+            }`;
+        }
+        ipcRenderer.on("check-font-data", (event, data)=>{
+            refreshFont();
+        })
+        refreshFont();
 
     </script>
 </body>

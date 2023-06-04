@@ -143,3 +143,5 @@ const extensionModes = {
   "xml": "xml",
   "yaml": "yaml"
   };
+
+  const supportedExtensions = [ "txt", "html", "htm", "shtml", "xhtml", "xml", "json", "md", "markdown", "yaml", "yml", "csv", "tsv", "sql", "php", "rb", "java", "py", "pl", "swift", "kt", "dart", "c", "h", "cpp", "cc", "cxx", "h", "hh", "hpp", "hxx", "cs", "fs", "fsi", "fsx", "go", "rs", "scala", "lua", "m", "mm", "perl", "sh", "bash", "zsh", "fish", "ps1", "psm1", "psd1", "tex", "log", "cfg", "ini", "conf", "plist", "bat", "cmd", "js", "css", "npmignore", "gitignore", "svg"];

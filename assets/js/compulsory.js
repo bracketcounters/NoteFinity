@@ -168,3 +168,47 @@ class ProgressView {
         }, 10000);
     }
 }
+
+        // Drag and Drop Feature
+        class FileDragger {
+            constructor(text="Drag Files to Open") {
+                this.div = document.createElement("div");
+                this.div.setAttribute("class", "fixed inset-0 z-20 bg-[#ffffffbb] hidden justify-center items-center fileDraggerParent");
+                this.div.innerHTML = `<div class="border-2 border-gray-600 border-dashed p-8 w-[60vw] m-auto flex justify-center items-center pointer-events-none">
+                <p class="font-semibold text-gray-600">${text}</p>
+            </div>`;
+                this.opened = false;
+            }
+            open() {
+                return new Promise((resolve, reject)=>{
+                    if (!this.opened) {
+                        document.body.appendChild(this.div);
+                        this.div.classList.remove("hidden");
+                        this.div.classList.add("flex");
+                        this.opened = true;
+                        this.div.addEventListener("drop", (event)=>{
+                            let files = Array.from(event.dataTransfer.files);
+                            this.close();
+                            resolve(files);
+                        })
+                        this.div.addEventListener("dragleave", (event)=>{
+                            this.close();
+                            resolve([]);
+                        })
+                    }
+                    else {
+                        this.div.classList.remove("hidden");
+                        this.div.classList.add("flex");
+                    }
+                })
+            }
+            close() {
+                if (this.opened) {
+                    this.div.classList.remove("flex");
+                    this.div.classList.add("hidden");
+                    document.body.removeChild(this.div);
+                    this.opened = false;
+                }
+            }
+        }
+

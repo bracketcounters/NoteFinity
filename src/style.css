@@ -114,3 +114,11 @@
     }
   }
   
+.fileDraggerParent {
+    animation: fileDraggerParentPlay 0.4s;
+}
+@keyframes fileDraggerParentPlay {
+    from {
+        @apply opacity-0;
+    }
+}

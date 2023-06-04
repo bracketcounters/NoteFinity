@@ -116,7 +116,10 @@
         })
 
         ipcRenderer.on("back-refresh-textbox-images", (event, data)=>{
-            data.unshift("../../../assets/images/background-gradient.png");
+
+            data.unshift("../../../assets/images/background-gradient.png", "../../../assets/images/pink-blue-gradient.png", "../../../assets/images/blue-violet-gradient.png", "../../../assets/images/white-orange-gradient.png", "../../../assets/images/blue-chamomile.jpg", "../../../assets/images/magical-place.jpg", "../../../assets/images/yellow_flower.jpg", "../../../assets/images/pencils.jpg");
+
+
             _id("textboxThemeBGImageSelectorParent").innerHTML = ""
             data.forEach(element => {
                 let deleteButtonExtraClass = "";

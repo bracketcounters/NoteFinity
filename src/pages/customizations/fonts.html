@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <style>
+        *::-webkit-scrollbar {
+            width: 10px;
+            background: rgb(243, 244, 246);
+        }
+        *::-webkit-scrollbar-thumb {
+            background: rgba(70, 70, 70, 0.2);
+            border-radius: 5px;
+        }
+        .confirmModal {
+            padding: 0.8rem !important;
+        }
+    </style>
+    <title>Fonts Panel</title>
+</head>
+<body class="bg-gray-100 select-none">
+    <div class="container p-3">
+        <div class="flex justify-between items-center mt-2 mb-3">
+            <h3 class="text-xs">Font Size:</h3>
+            <input type="number" oninput="fontStyler()" min="5" max="100" id="inputSize" class="bg-white w-40 outline-0 p-1 text-xs rounded">
+        </div>
+        <div class="flex justify-between items-center mt-2 mb-3">
+            <h3 class="text-xs">Font Weight:</h3>
+            <input type="range" onchange="fontStyler()" min="1" max="9" id="inputWeight" class="bg-white w-40 outline-0 p-1 text-xs rounded">
+        </div>
+        <div class="flex items-center mt-2 mb-3">
+            <input id="inputItalic" type="checkbox" onclick="fontStyler()">
+            <label for="inputItalic" class="text-xs ml-1.5 italic">Italic</label>
+        </div>
+    </div>
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+
+        const { ipcRenderer } = require("electron");
+        let fontData = localStorage.getItem("fontData");
+        if (fontData == null) {
+            fontData = {
+                size: 16,
+                weight: 4,
+                italic: false,
+            }
+        }
+        else {
+            fontData = JSON.parse(fontData);
+        }
+
+        _id("inputSize").value = fontData.size;
+        _id("inputWeight").value = fontData.weight;
+        if (fontData.italic) {
+            _id("inputItalic").checked = true;
+        }
+
+
+        function fontStyler() {
+            let fontData = {
+                size: _id("inputSize").value,
+                weight: _id("inputWeight").value,
+                italic: true?_id("inputItalic").checked:false
+            }
+            localStorage.setItem("fontData", JSON.stringify(fontData));
+            ipcRenderer.send("check-font-data-triggered", true);
+        }
+
+        _id("inputSize").addEventListener("wheel", (event)=>{
+            if (event.deltaY < 0) {
+                if (_id("inputSize").value < _id("inputSize").max) {
+                    _id("inputSize").value++;
+                }
+            }
+            else {
+                if (_id("inputSize").value > _id("inputSize").min) {
+                    _id("inputSize").value--;
+                }
+            }
+        })
+
+        window.addEventListener("keydown", (e)=>{
+            if (e.altKey) {
+                e.preventDefault();
+            }
+            if (e.keyCode == 27) {
+                window.close();
+            }
+        })
+    </script>
+</body>
+</html>

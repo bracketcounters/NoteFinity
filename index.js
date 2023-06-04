@@ -69,6 +69,17 @@ function randomString(length) {
     }
     return parts.pop();
   }
+
+  function filenameOf(filepath) {
+    let parts = filepath.split("/");
+    if (filepath.indexOf("\\") != -1) {
+        parts = filepath.split("\\");
+    }
+    else {
+        parts = filepath.split("/");
+    }
+    return parts[parts.length-1];
+    }
   
 
 ipcMain.on("open-modal", (event, data)=>{
@@ -91,6 +102,10 @@ ipcMain.on("open-modal", (event, data)=>{
         case "openrecent":
             let modalRecentFiles = new Modal(350, 500, win, "src/pages/file-actions/recentfiles.html", true);
             modalRecentFiles.open();
+            break;
+        case "fonts":
+            let modalFonts = new Modal(300, 186, win, "src/pages/customizations/fonts.html", false);
+            modalFonts.open();
             break;
 
         default:
@@ -386,6 +401,10 @@ ipcMain.on("always-on-top", (event, data)=>{
     }
 })
 
+ipcMain.on("check-font-data-triggered", (event, data)=>{
+    win.webContents.send("check-font-data", true);
+})
+
 function openWeb(url) {
     exec(`start ${url}`, (error, stdout, stderr)=>{
         return;
@@ -396,7 +415,11 @@ ipcMain.on("open-web", (even, url)=>{
     openWeb(url);
 })
 
+
+
+
 app.on("ready", ()=>{
     createWindow();
+
 })
 
