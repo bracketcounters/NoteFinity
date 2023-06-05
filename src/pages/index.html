@@ -104,6 +104,7 @@
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                     <hr>
+                    <li onclick="viewInBrowser()">View File in Browser</li>
                 </ul>
             </li>
             <li class="navlist-item">
@@ -235,6 +236,7 @@
 
                 let tabitem = document.createElement("div");
                 tabitem.setAttribute("class", "tabitem");
+                // tabitem.setAttribute("draggable", true);
                 if (filepath == null) {
                     tabitem.innerHTML = `<span class="tabitem-star hidden">*</span> <span class="tabitem-filename">${filename}-${this.untitledCount}</span> <span onclick="tabitemClose(${this.editorElements.length-1})" class="tabitem-close">&times;</span></div>`;
                 }
@@ -763,7 +765,7 @@
         }
 
         ipcRenderer.on("back-openFile", (event, data)=>{
-            
+            ipcRenderer.send("getFileContents", data);
         })
 
         ipcRenderer.on("back-getFileContents", (event, data)=>{
@@ -1008,6 +1010,7 @@
         function resetNoteFinity() {
             confirmModal("Do you want to reset NoteFinity? This action will delete all customizations, unsaved changes, and the list of recently opened files.").then(response=>{
                 if (response) {
+                    ipcRenderer.send("reset-notefinity", true);
                     let request = indexedDB.deleteDatabase("filestore");
                     request.onsuccess = function(event) {
                         localStorage.clear();
@@ -1120,6 +1123,16 @@
             refreshFont();
         })
         refreshFont();
+
+        function viewInBrowser() {
+            let filepath = notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath");
+            if (filepath.toLowerCase().startsWith("untitled-")) {
+                alertModal("Please save the file before attempting to open it in the browser.");
+            }
+            else {
+                // Open the file in the browser
+            }
+        }
 
     </script>
 </body>

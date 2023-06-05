@@ -406,13 +406,30 @@ ipcMain.on("check-font-data-triggered", (event, data)=>{
 })
 
 function openWeb(url) {
-    exec(`start ${url}`, (error, stdout, stderr)=>{
-        return;
-    })
+    try {
+        exec(`start ${url}`, (error, stdout, stderr)=>{
+            return;
+        })
+    }
+    catch(err) {}
 }
 
 ipcMain.on("open-web", (even, url)=>{
     openWeb(url);
+})
+
+ipcMain.on("reset-notefinity", (event, data)=>{
+    if (data) {
+        try {
+            const folder = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images");
+            const files = fs.readdirSync(folder);
+            files.forEach(file=>{
+                let filepath = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images", file);
+                fs.unlinkSync(filepath);
+            })
+        }
+        catch(err) {}
+    }
 })
 
 
@@ -420,6 +437,5 @@ ipcMain.on("open-web", (even, url)=>{
 
 app.on("ready", ()=>{
     createWindow();
-
 })
 
