@@ -425,7 +425,7 @@ ipcMain.on("reset-notefinity", (event, data)=>{
             const files = fs.readdirSync(folder);
             files.forEach(file=>{
                 let filepath = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images", file);
-                fs.unlinkSync(filepath);
+                fs.unlinkSync(filepath)
             })
         }
         catch(err) {}

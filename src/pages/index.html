@@ -95,6 +95,8 @@
                     <li onclick="convertCaseTo()">Convert Case to</li>
                     <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
                     <li onclick="deleteEmptyLines()">Delete Empty Lines</li>
+                    <hr>
+                    <li style="display: flex; justify-content: space-between;" onclick="toggleReadOnly(this)">Read Only <input type="checkbox"></li>
                 </ul>
             </li>
             <li class="navlist-item">
@@ -191,7 +193,8 @@
                 this.aceEditors = [];
                 this.activatedEditor = 0;
                 this.wordWrap = true;
-                this.untitledCount = 0;                
+                this.untitledCount = 0;
+                this.readOnly = false;             
             }
             initiate() {
                 this.aceEditors = [];
@@ -435,6 +438,17 @@
             if (event.keyCode == 40) {
                 if (tablist.htmlElement != null) {
                     tablist.change(1);
+                }
+            }
+        });
+
+        document.addEventListener("wheel", (event)=>{
+            if (event.ctrlKey) {
+                if (event.deltaY > 0) {
+                    changeFontSize(0);
+                }
+                else {
+                    changeFontSize(1);
                 }
             }
         })
@@ -912,10 +926,20 @@
 
         const editTab = new EditTab();
         function removeUnnecessarySpaces() {
-            editTab.removeUnnecessarySpaces();
+            if (notefinity.readOnly) {
+                alertModal("To allow modifications, please disable read-only mode.", "error");
+            }
+            else {
+                editTab.removeUnnecessarySpaces();
+            }
         }
         function deleteEmptyLines() {
-            editTab.deleteEmptyLines();
+            if (notefinity.readOnly) {
+                alertModal("To allow modifications, please disable read-only mode.", "error");
+            }
+            else {
+                editTab.deleteEmptyLines();
+            }
         }
 
         class Tablist {
@@ -1094,6 +1118,38 @@
             })
         });
 
+        function changeFontSize(scale) {
+            let fontData = localStorage.getItem("fontData");
+            if (fontData == null) {
+                fontData = {
+                    size: 16,
+                    weight: 4,
+                    italic: false,
+                }
+            }
+            else {
+                fontData = JSON.parse(fontData);
+            }
+            let fontSize = fontData.size;
+            if (scale == 1) {
+                fontSize++;
+            }
+            else {
+                fontSize--;
+            }
+
+            if (fontSize < 5) {
+                fontSize = 5;
+            }
+            if (fontSize > 100) {
+                fontSize = 100;
+            }
+
+            fontData.size = fontSize;
+
+            localStorage.setItem("fontData", JSON.stringify(fontData));
+            refreshFont();
+        }
 
         function refreshFont() {
             let fontData = localStorage.getItem("fontData");
@@ -1132,6 +1188,14 @@
             else {
                 // Open the file in the browser
             }
+        }
+
+        function toggleReadOnly(elm) {
+            notefinity.aceEditors.forEach(editor=>{
+                editor.setReadOnly(!notefinity.readOnly);
+            })
+            elm.querySelector("input").checked = !notefinity.readOnly;
+            notefinity.readOnly = !notefinity.readOnly;
         }
 
     </script>

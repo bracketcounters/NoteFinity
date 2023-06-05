@@ -24,7 +24,7 @@
     <div class="container p-3">
         <div class="flex justify-between items-center mt-2 mb-3">
             <h3 class="text-xs">Font Size:</h3>
-            <input type="number" oninput="fontStyler()" min="5" max="100" id="inputSize" class="bg-white w-40 outline-0 p-1 text-xs rounded">
+            <input type="number" min="5" max="100" id="inputSize" class="bg-white w-40 outline-0 p-1 text-xs rounded">
         </div>
         <div class="flex justify-between items-center mt-2 mb-3">
             <h3 class="text-xs">Font Weight:</h3>
@@ -37,6 +37,16 @@
     </div>
     <script src="../../../assets/js/compulsory.js"></script>
     <script>
+
+        _id("inputSize").addEventListener("input", ()=>{
+            if (_id("inputSize").value > 100) {
+                _id("inputSize").value = 100;
+            }
+            else if (_id("inputSize").value < 5) {
+                _id("inputSize").value = 5;
+            }
+            fontStyler();
+        })
 
         const { ipcRenderer } = require("electron");
         let fontData = localStorage.getItem("fontData");
