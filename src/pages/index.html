@@ -46,6 +46,20 @@
             font-family: "Custom";
         } */
         
+        .context-menu ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        }
+
+        .context-menu li {
+        cursor: pointer;
+        padding: 5px;
+        }
+
+        .context-menu li:hover {
+        background-color: #ccc;
+        }
 
     </style>
     <style id="configurableStyle"></style>
@@ -53,12 +67,12 @@
     <title>NoteFinity</title>
 </head>
 <body class="rounded-md select-none">
-    <header class="w-full flex flex-col">
+    <header class="w-full flex flex-col fixed left-0 top-0 z-[1000]">
         <div class="flex justify-between items-center w-full h-8 px-2" id="headerPane" style="-webkit-app-region: drag;">
 
         </div>
         <ul class="w-full h-6 flex items-center justify-start" id="headerNavigation">
-            <li class="navlist-item">
+            <button class="navlist-item">
                 <span>File</span>
                 <ul class="navlist-sublist w-40 ml-1">
                     <li onclick="tabNewFile()">New (Ctrl+N)</li>
@@ -81,8 +95,8 @@
                     <hr>
                     <li onclick="appAction('exit')">Exit</li>
                 </ul>
-            </li>
-            <li class="navlist-item">
+            </button>
+            <button class="navlist-item">
                 <span>Edit</span>
                 <ul class="navlist-sublist w-40">
                     <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo (Ctrl+Z)</li>
@@ -90,7 +104,12 @@
                     <hr>
                     <li onclick="reloadFileContents()">Reload (Ctrl+R)</li>
                     <hr>
-                    <li>Insert</li>
+                    <li onclick="editTab.openFindPanel();">Find (Ctrl+F)</li>
+                    <li onclick="editTab.openFindReplacePanel();">Replace (Ctrl+H)</li>
+                    <hr>
+                    <li>Copy to Clipboard</li>
+                    <hr>
+                    <li onclick="insertDate()">Time/Date (F5)</li>
                     <hr>
                     <li onclick="convertCaseTo()">Convert Case to</li>
                     <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
@@ -98,25 +117,25 @@
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="toggleReadOnly(this)">Read Only <input type="checkbox"></li>
                 </ul>
-            </li>
-            <li class="navlist-item">
+            </button>
+            <button class="navlist-item">
                 <span>View</span>
-                <ul class="navlist-sublist w-36">
+                <ul class="navlist-sublist w-40">
                     <li style="display: flex; justify-content: space-between;" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                     <hr>
-                    <li onclick="viewInBrowser()">View File in Browser</li>
+                    <li onclick="viewInApplication()">View File in Application</li>
                 </ul>
-            </li>
-            <li class="navlist-item">
+            </button>
+            <button class="navlist-item">
                 <span>Options</span>
                 <ul class="navlist-sublist w-[9rem]">
                     <li onclick="openModal('chooselanguage')">Choose Language</li>
                     <li>Encrypt File</li>
                 </ul>
-            </li>
-            <li class="navlist-item">
+            </button>
+            <button class="navlist-item">
                 <span>Customization</span>
                 <ul class="navlist-sublist w-32">
                     <li onclick="openModal('frame')">Frame</li>
@@ -124,8 +143,8 @@
                     <li onclick="openModal('textbox')">Textbox</li>
                     <li onclick="openModal('fonts')">Fonts</li>
                 </ul>
-            </li>
-            <li class="navlist-item">
+            </button>
+            <button class="navlist-item">
                 <span>Help</span>
                 <ul class="navlist-sublist w-36">
                     <li onclick="openAboutNoteFinity()">About NoteFinity</li>
@@ -134,7 +153,7 @@
                     <li onclick="reloadNoteFinity()">Reload</li>
                     <li onclick="resetNoteFinity()">Reset</li>
                 </ul>
-            </li>
+            </button>
         </ul>
     </header>
     <div id="editorList">
@@ -152,6 +171,7 @@
     <script src="../../assets/js/themes.js"></script>
     <script src="../../assets/js/htmlrootclasses.js"></script>
     <script src="../../assets/js/extensions.js"></script>
+    <script src="../../assets/js/convertcase.js"></script>
     <script>
     
         const fdb = new IndexedDBDatabase("filestore");
@@ -194,7 +214,8 @@
                 this.activatedEditor = 0;
                 this.wordWrap = true;
                 this.untitledCount = 0;
-                this.readOnly = false;             
+                this.readOnly = false;     
+                this.recentFiles = [];        
             }
             initiate() {
                 this.aceEditors = [];
@@ -302,6 +323,7 @@
 
         const notefinity = new Editor();
 
+        let openedFilesToCheckExistence = [];
         fdb.readAll().then(result=>{
             let i = 0;
             let untitledFilePaths = [];
@@ -320,6 +342,9 @@
                     }
                     catch(err) {}
                 }
+                else {
+                    openedFilesToCheckExistence.push(data.filepath);
+                }
                 notefinity.editorElements[i].setAttribute("data-mode-changed", data.modeChanged);
                 i++;
             });
@@ -335,12 +360,17 @@
             if (document.querySelectorAll(".tabitem").length <= 0 || result.length == 0) {
                 notefinity.add();
             }
+        }).then(()=>{
+            setTimeout(() => {
+                ipcRenderer.send("check-file-existence", openedFilesToCheckExistence);
+            }, 1200);
         })
 
 
 
         const {ipcRenderer} = require("electron");
         const progressView = new ProgressView();
+
 
 
         function backUpProcess() {
@@ -423,6 +453,18 @@
             if (event.altKey && event.key == "F4") {
                 event.preventDefault();
                 appAction("exit");
+            }
+            if (event.keyCode == 116) {
+                event.preventDefault();
+                insertDate();
+            }
+            if (event.ctrlKey && event.shiftKey && event.key == "R") {
+                event.preventDefault();
+                reloadNoteFinity();
+            }
+            if (event.ctrlKey && event.shiftKey && event.key == "T") {
+                event.preventDefault();
+                openLastRecentFile();
             }
         });
 
@@ -597,6 +639,7 @@
         function pushInRecentFiles(index) {
             if (!notefinity.editorElements[index].getAttribute("data-filepath").toLowerCase().startsWith("untitled-")) {
                 recentFiles.push(notefinity.editorElements[index].getAttribute("data-filepath"));
+                notefinity.recentFiles.push(notefinity.editorElements[index].getAttribute("data-filepath"));
                 recentFiles = [... new Set(recentFiles)];
                 let recentFilesLimit = 100;
                 if (recentFiles.length > recentFilesLimit) {
@@ -614,6 +657,7 @@
                         if (response) {
                             pushInRecentFiles(index);
                             let noteElement = notefinity.editorElements[index];
+                            notefinity.aceEditors[index].destroy();
                             noteElement.remove();
                             notefinity.updateEditorElements();
                             appAction("exit");
@@ -623,6 +667,7 @@
                 else {
                     pushInRecentFiles(index);
                     let noteElement = notefinity.editorElements[index];
+                    notefinity.aceEditors[index].destroy();
                     noteElement.remove();
                     notefinity.updateEditorElements();
                     appAction("exit");
@@ -634,6 +679,7 @@
                     if (response) {
                         pushInRecentFiles(index);
                         let noteElement = notefinity.editorElements[index];
+                        notefinity.aceEditors[index].destroy();
                         noteElement.remove();
 
                         document.querySelectorAll(".tabitem")[index].remove();
@@ -670,6 +716,7 @@
             else {
                 pushInRecentFiles(index);
                 let noteElement = notefinity.editorElements[index];
+                notefinity.aceEditors[index].destroy();
                 noteElement.remove();
                 notefinity.updateEditorElements();
 
@@ -783,6 +830,10 @@
         })
 
         ipcRenderer.on("back-getFileContents", (event, data)=>{
+            if (data.contents == null) {
+                alertModal("File cannot be opened. Please check if it exists.", "error");
+                return;
+            }
             for (let i = 0; i<notefinity.editorElements.length; i++) {
                 if (notefinity.editorElements[i].getAttribute("data-filepath") == data.filepath) {
                     notefinity.activateTab(i);
@@ -854,6 +905,10 @@
             }
         }
         ipcRenderer.on("back-reloadFileContents", (event, data)=>{
+            if (data.contents == null) {
+                alertModal("File cannot be reloaded. Please check if it exists.", "error");
+                return;
+            }
             notefinity.aceEditors[data.index].setValue("");
             notefinity.aceEditors[data.index].insert(data.contents);
             setTimeout(() => {
@@ -882,8 +937,6 @@
             }
             notefinity.updateEditor(notefinity.activatedEditor);
         })
-
-
 
         class EditTab {
             constructor() {
@@ -921,6 +974,64 @@
                 let contents = this.editor.getValue();
                 let nonEmptyValue = contents.replace(/^\s*[\r\n]/gm, "");
                 this.editor.setValue(nonEmptyValue);
+            }
+            convertCaseTo(caseName) {
+                this.selectEditor();
+                let selection = this.getSelection();
+                if (this.checkTextSelection(selection.text)) {
+                    let replaceText = selection.text;
+                    switch (caseName) {
+                        case "uppercase":
+                            replaceText = selection.text.toUpperCase()
+                            break;
+                        case "lowercase":
+                            replaceText = selection.text.toLowerCase();
+                            break;
+                        case "randomcase":
+                            replaceText = convertToRandomCase(selection.text);
+                            break;
+                        case "invertcase":
+                            replaceText = convertToInvertCase(selection.text);
+                            break;
+                        case "propercase":
+                            replaceText = convertToProperCase(selection.text);
+                            break;
+                        case "sentencecase":
+                            replaceText = convertToSentenceCase(selection.text);
+                            break;
+
+                        default:
+                            replaceText = selection.text;
+                    }
+                    this.editor.session.replace(selection.range, replaceText);
+                }
+            }
+            insertDate() {
+                this.selectEditor();
+                const date = new Date();
+                let hours = date.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                if (hours < 10) {
+                    hours = "0" + hours.toString();
+                }
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const currentDate = date.toLocaleDateString('en-US', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                const time = hours + ':' + minutes + ' ' + ampm + ' ' + currentDate;
+                this.editor.insert(time);
+                this.editor.focus();
+            }
+            openFindPanel() {
+                this.selectEditor();
+                this.editor.execCommand("find");
+            }
+            openFindReplacePanel() {
+                this.selectEditor();
+                this.editor.execCommand("replace");
             }
         }
 
@@ -960,7 +1071,7 @@
             }
             this.htmlElement = document.createElement("div");
             this.htmlElement.setAttribute("id", "tabList");
-            this.htmlElement.setAttribute("class", "fixed flex bg-[#00000092] w-full h-full inset-0 z-50 justify-center items-center");
+            this.htmlElement.setAttribute("class", "fixed flex bg-[#00000092] w-full h-full inset-0 z-[1000] justify-center items-center");
 
             let buttonHTML = "";
             this.fileList.forEach(element=>{
@@ -1052,7 +1163,7 @@
         }
         function reloadNoteFinity() {
             backUpProcess();
-            progressView.modal("Please wait...");
+            progressView.modal("Reloading...");
             setTimeout(() => {
                 ipcRenderer.send("appAction", "reload");
             }, 1000);
@@ -1067,7 +1178,7 @@
             let editor = notefinity.editorElements[index];
             let filepath = editor.getAttribute("data-filepath");
             if (filepath.toLowerCase().startsWith("untitled-")) {
-                alertModal("Cannot rename an untitled file. Save the file first.")
+                alertModal("Cannot rename an untitled file. Save the file first.", "error")
                 return;
             }
             else {
@@ -1180,13 +1291,17 @@
         })
         refreshFont();
 
-        function viewInBrowser() {
+        function viewInApplication() {
             let filepath = notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath");
             if (filepath.toLowerCase().startsWith("untitled-")) {
-                alertModal("Please save the file before attempting to open it in the browser.");
+                alertModal("Please save the file before attempting to open it in application.");
             }
             else {
-                // Open the file in the browser
+                let filepath = notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath");
+                let noOpenExtensions = ["txt", "md", "json", "ini", "conf", "bat", "log", "gitignore", "npmignore", "ps1"];
+                if (!noOpenExtensions.includes(extensionOf(filepath))) {
+                    ipcRenderer.send("open-in-application", filepath);
+                }
             }
         }
 
@@ -1197,6 +1312,80 @@
             elm.querySelector("input").checked = !notefinity.readOnly;
             notefinity.readOnly = !notefinity.readOnly;
         }
+
+        function convertCaseTo() {
+            if (notefinity.readOnly) {
+                alertModal("To allow modifications, please disable read-only mode.", "error");
+                return;
+            }
+            else {
+                openModal("convert-case-to");
+            }
+        }
+
+        ipcRenderer.on("back-convert-case", (event, data)=>{
+            editTab.convertCaseTo(data);
+        })
+
+        function insertDate() {
+            if (notefinity.readOnly) {
+                alertModal("To allow modifications, please disable read-only mode.", "error");
+                return;        
+            }
+            else {
+                editTab.insertDate();
+            }
+        }
+
+        function openLastRecentFile() {
+            let openedFiles = [];
+            notefinity.editorElements.forEach(element=>{
+                let filepath = element.getAttribute("data-filepath");
+                if (!filepath.toLowerCase().startsWith("untitled-")) {
+                    openedFiles.push(element.getAttribute("data-filepath"));
+                }
+            });
+            let recentFiles = notefinity.recentFiles.filter((value)=>{
+                return !openedFiles.includes(value);
+            });
+
+            recentFiles = recentFiles.reverse();
+            if (recentFiles.length > 0) {
+                ipcRenderer.send("check-recent-file-open", recentFiles[0]);
+            }
+        }
+
+        ipcRenderer.on("back-check-file-not-exists", (event, data)=>{
+            if (data.length == 0) {
+                return;
+            }
+            let result;
+            let sLetter = "s";
+            if (data.length == 1) {
+                result = data[0].toString();
+            } else {
+                const lastElement = data.pop();
+                result = data.join(", ") + " and " + lastElement;
+                sLetter = "";
+            }
+
+            alertModal(`Please check if ${result} exist${sLetter}.<br><br>However, NoteFinity is displaying previously saved content.`, "error");
+        })
+
+        ipcRenderer.on("back-check-recent-fileopen", (event, data)=>{
+            if (data.exists) {
+                ipcRenderer.send("getFileContents", data.filepath);
+            }
+            else {
+                let index = notefinity.recentFiles.indexOf(data.filepath);
+                if (index !== -1) {
+                    notefinity.recentFiles.splice(index, 1); // Removes one element at the found index
+                }
+                openLastRecentFile();
+            }
+        })
+
+
 
     </script>
 </body>

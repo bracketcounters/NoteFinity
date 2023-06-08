@@ -19,9 +19,10 @@ function extensionOf(filename) {
     return parts.pop();
 }
 
+let confirmModalOpened = false;
 function confirmModal(message="Are you sure?") {
     let element = document.createElement("div");
-    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 confirmModalParent");
+    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000]  confirmModalParent");
     element.innerHTML = `<div class="bg-white rounded p-4 max-w-[400px] w-[90%] z-50 confirmModal">
     <h3 class="text-sm font-semibold text-black">${message}</h3>
     <div data-label="confirmModalForm" class="flex space-x-1 my-2">
@@ -29,39 +30,37 @@ function confirmModal(message="Are you sure?") {
         <button id="confirmModalButtonCancel" class="bg-red-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-red-200">Cancel</button>
     </div>
 </div>`;
-document.body.appendChild(element);
-_id("confirmModalButtonOk").focus();
-window.addEventListener("keydown", (e)=>{
-    if (e.key == "Escape") {
-        try {document.body.removeChild(element);} catch(err){}
-    }
-})
+if (!confirmModalOpened) {
+    document.body.appendChild(element);
+    _id("confirmModalButtonOk").focus();
+    confirmModalOpened = true;
+    window.addEventListener("keydown", (e)=>{
+        if (e.key == "Escape") {
+            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
+        }
+    })
     return new Promise((resolve, reject)=>{
         _id("confirmModalButtonOk").addEventListener("click", ()=>{
             resolve(true);
-            try {document.body.removeChild(element);} catch(err){}
+            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
         });
         _id("confirmModalButtonCancel").addEventListener("click", ()=>{
             resolve(false);
-            try {document.body.removeChild(element);} catch(err){}
+            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
         });
     })
-    /* 
-    <div class="bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 confirmModalParent">
-        <div class="bg-white rounded p-4 max-w-[90%] w-full z-50 confirmModal">
-            <h3 class="text-sm font-semibold text-black">If you quit, unsaved data may lost</h3>
-            <div class="flex space-x-1 my-2">
-                <button class="bg-green-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm">Ok</button>
-                <button class="bg-red-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm">Cancel</button>
-            </div>
-        </div>
-    </div>
-    */
+}
+else {
+    return new Promise((resolve, reject)=>{
+        resolve(false);
+    })
+}
 }
 
+let alertModalOpened = false;
 function alertModal(message="Alert", type="info") {
     let element = document.createElement("div");
-    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 confirmModalParent");
+    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000]  confirmModalParent");
 
     let buttonColor = "sky";
     if (type == "success") {
@@ -71,30 +70,38 @@ function alertModal(message="Alert", type="info") {
         buttonColor = "red";
     }
 
-    element.innerHTML = `<div class="bg-white rounded p-4 max-w-[400px] w-[90%] z-50 confirmModal">
+    element.innerHTML = `<div class="bg-white rounded p-4 max-w-[400px] w-[90%] max-h-[60vh] overflow-auto z-50 confirmModal">
     <h3 class="text-sm font-semibold text-black">${message}</h3>
     <div data-label="confirmModalForm" class="flex space-x-1 my-2">
         <button id="confirmModalButtonOk" class="bg-${buttonColor}-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-${buttonColor}-200">Ok</button>
     </div>
 </div>`;
-    document.body.appendChild(element);
-    _id("confirmModalButtonOk").focus();
-    window.addEventListener("keydown", (e)=>{
-        if (e.key == "Escape") {
-            try {document.body.removeChild(element);} catch(err){}
-        }
-    })
-    return new Promise((resolve, reject)=>{
-        _id("confirmModalButtonOk").addEventListener("click", ()=>{
-            resolve(true);
-            try {document.body.removeChild(element);} catch(err){}
-        });
-    })
+    if (!alertModalOpened) {
+        alertModalOpened = true;
+        document.body.appendChild(element);
+        _id("confirmModalButtonOk").focus();
+        window.addEventListener("keydown", (e)=>{
+            if (e.key == "Escape") {
+                try {document.body.removeChild(element); alertModalOpened = false;} catch(err){}
+            }
+        })
+        return new Promise((resolve, reject)=>{
+            _id("confirmModalButtonOk").addEventListener("click", ()=>{
+                resolve(true);
+                try {document.body.removeChild(element); alertModalOpened = false;} catch(err){}
+            });
+        })
+    }
+    else {
+        return new Promise((resolve, reject)=>{
+            resolve(false);
+        })
+    }
 }
 
 function promptModal(prompt="Enter value", defaultValue="", type=null) {
     let element = document.createElement("div");
-    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-40 promptParent");
+    element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000] promptParent");
 
     element.innerHTML = `<form id="promptForm" class="bg-white rounded p-4 max-w-[400px] w-[90%] z-50 promptModal">
     <h3 class="text-sm font-semibold text-black">${prompt}</h3>
@@ -146,7 +153,7 @@ class ProgressView {
         this.element = document.createElement("div");
     }
     modal(text="Please wait...") {
-        this.element.setAttribute("class", "bg-[#22222288] fixed inset-0 flex justify-center items-center z-40 progressModalParent");
+        this.element.setAttribute("class", "bg-[#22222288] fixed inset-0 flex justify-center items-center z-[1000] progressModalParent");
         this.element.innerHTML = `<div class="bg-white rounded p-6 max-w-[400px] w-[90%] z-50 flex justify-between items-center progressModal">
         <h3 class="text-sm font-semibold text-black">${text}</h3>
         <img src="../../assets/icons/loader.svg" alt="Loader" class="w-6 loaderAnimation">

@@ -22,13 +22,14 @@ function createWindow() {
         frame: false,
         minWidth: 312,
         minHeight: 120,
+        // alwaysOnTop: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
         }
     })
     win.loadFile("src/pages/index.html");
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
     windowState.manage(win);
     ipcMain.on("appAction", (event, data)=>{
         if (data == "maximize") {
@@ -106,6 +107,10 @@ ipcMain.on("open-modal", (event, data)=>{
         case "fonts":
             let modalFonts = new Modal(300, 186, win, "src/pages/customizations/fonts.html", false);
             modalFonts.open();
+            break;
+        case "convert-case-to":
+            let modalConvertCase = new Modal(300, 280, win, "src/pages/edit/convertcase.html", false);
+            modalConvertCase.open();
             break;
 
         default:
@@ -198,7 +203,7 @@ ipcMain.on("getFileContents", (event, data)=>{
         textContents = fs.readFileSync(data, "utf8");
     }
     catch(err) {
-        textContents = ""
+        textContents = null;
     }
     let backData = {
         filepath: data,
@@ -213,7 +218,7 @@ ipcMain.on("reloadFileContents", (event, data)=>{
         textContents = fs.readFileSync(data.filepath, "utf8");
     }
     catch(err) {
-        textContents = ""
+        textContents = null;
     }
     let backData = {
         index: data.index,
@@ -418,6 +423,10 @@ ipcMain.on("open-web", (even, url)=>{
     openWeb(url);
 })
 
+ipcMain.on("return-convert-case", (event, data)=>{
+    win.webContents.send("back-convert-case", data);
+})
+
 ipcMain.on("reset-notefinity", (event, data)=>{
     if (data) {
         try {
@@ -432,10 +441,52 @@ ipcMain.on("reset-notefinity", (event, data)=>{
     }
 })
 
+ipcMain.on("open-in-application", (event, data)=>{
+    const command = `explorer ${data}`;
+    try {
+        exec(command);
+    }
+    catch(err) {};
+})
 
+ipcMain.on("check-file-existence", (event, data)=>{
+    let returnData = [];
+    data.forEach(filepath=>{
+        let existence = fs.existsSync(filepath);
+        if (!existence) {
+            returnData.push(filepath);
+        }
+    })
+    event.reply("back-check-file-not-exists", returnData);
+})
 
+ipcMain.on("check-recent-file-open", (event, data)=>{
+    let existence = fs.existsSync(data);
+    let returnData = {
+        filepath: data,
+        exists: false
+    }
+    if (existence) {
+        returnData.exists = true;
+    }
+    event.reply("back-check-recent-fileopen", returnData);
+
+})
 
 app.on("ready", ()=>{
     createWindow();
+
+    const argv = process.argv.slice(2);
+    if (argv.length > 0) {
+        if (argv.indexOf("--update") != -1) {
+            console.log("Updating");
+        }
+        else {
+            let fileLocation = path.resolve(argv[0]);
+            setTimeout(() => {
+                win.webContents.send("back-openFile", fileLocation);
+            }, 520);
+        }
+    }
 })
 

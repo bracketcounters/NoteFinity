@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <style>
+        *::-webkit-scrollbar {
+            width: 10px;
+            background: rgb(243, 244, 246);
+        }
+        *::-webkit-scrollbar-thumb {
+            background: rgba(70, 70, 70, 0.2);
+            border-radius: 5px;
+        }
+        .confirmModal {
+            padding: 0.8rem !important;
+        }
+    </style>
+    <title>Convert Case</title>
+</head>
+<body class="select-none">
+    <div class="container p-2">
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('uppercase')">UPPERCASE</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('lowercase')">lowercase</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('sentencecase')">Sentence case</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('propercase')">Proper Case</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('invertcase')">iNVERT CASE</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="modalConvertCase('randomcase')">rAndOm caSE</div>
+    </div>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+
+    const { ipcRenderer } = require("electron");
+
+    function modalConvertCase(caseName) {
+        ipcRenderer.send("return-convert-case", caseName);
+    }
+
+    window.addEventListener("keydown", (e) => {
+        if (e.altKey) {
+            e.preventDefault();
+        }
+        if (e.keyCode == 27) {
+          window.close();
+        }
+    });
+    </script>
+</body>
+</html>

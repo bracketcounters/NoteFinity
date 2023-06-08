@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 .navlist-item {
-    @apply text-xs transition-all rounded-sm px-2 py-0.5 relative z-10;
+    @apply text-xs transition-all rounded-sm px-2 py-0.5 relative outline-0 z-10 text-left cursor-default;
 }
 .navlist-item-active {
     @apply bg-slate-300;
 }
 .navlist-sublist {
-    @apply absolute bg-white shadow-lg left-0 rounded-md overflow-hidden hidden;
+    @apply absolute bg-white shadow-lg left-0 rounded-md  max-h-[90vh] overflow-auto hidden;
     animation: navlistSublistPlay 0.2s;
 }
 @keyframes navlistSublistPlay {
@@ -21,7 +21,7 @@
 .navlist-sublist li {
     @apply cursor-pointer px-4 py-2;
 }
-.navlist-item:hover .navlist-sublist {
+.navlist-item:focus .navlist-sublist {
     @apply block;
 }
 

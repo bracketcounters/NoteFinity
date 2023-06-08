@@ -106,6 +106,8 @@ const extensionModes = {
   "prolog": "prolog",
   "properties": "properties",
   "protobuf": "protobuf",
+  "ps1": "powershell",
+  "psm1": "powershell",
   "py": "python",
   "r": "r",
   "rb": "ruby",
