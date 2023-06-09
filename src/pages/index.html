@@ -37,14 +37,6 @@
         margin-left: 5px;
         cursor: pointer;
         }
-
-        @font-face {
-            font-family: "Custom";
-            src: url('C:/Users/pptec/AppData/Local/NoteFinity/user-fonts/WorkSpaceRegular-w18Bw.ttf');
-        }
-        /* .editor {
-            font-family: "Custom";
-        } */
         
         .context-menu ul {
         list-style-type: none;
@@ -132,6 +124,7 @@
                 <span>Options</span>
                 <ul class="navlist-sublist w-[9rem]">
                     <li onclick="openModal('chooselanguage')">Choose Language</li>
+                    <li onclick="fetchFromInternet()">Fetch From Internet</li>
                     <li>Encrypt File</li>
                 </ul>
             </button>
@@ -260,7 +253,7 @@
 
                 let tabitem = document.createElement("div");
                 tabitem.setAttribute("class", "tabitem");
-                // tabitem.setAttribute("draggable", true);
+                tabitem.setAttribute("draggable", true);
                 if (filepath == null) {
                     tabitem.innerHTML = `<span class="tabitem-star hidden">*</span> <span class="tabitem-filename">${filename}-${this.untitledCount}</span> <span onclick="tabitemClose(${this.editorElements.length-1})" class="tabitem-close">&times;</span></div>`;
                 }
@@ -283,6 +276,7 @@
                 this.aceEditors[this.aceEditors.length-1].insert(text);
                 this.aceEditors[this.aceEditors.length-1].session.setMode(`ace/mode/${mode}`);
                 this.aceEditors[this.aceEditors.length-1].resize();
+                this.aceEditors[this.aceEditors.length-1].getSession().getUndoManager().reset();
             }
 
             updateEditor(index) {
@@ -1222,6 +1216,8 @@
 
         window.addEventListener("dragover", (event)=>{
             event.preventDefault();
+            event.dataTransfer.effectAllowed = "copy";
+            event.dataTransfer.dropEffect = "copy";
             filedragger.open().then(response=>{
                 response.forEach(file=>{
                     ipcRenderer.send("getFileContents", file.path);
@@ -1385,7 +1381,25 @@
             }
         })
 
+        function fetchFromInternet() {
+            promptModal("Enter a valid URL", "", null, "url").then(response=>{
+                if (response != false) {
+                    progressView.loader();
+                    ipcRenderer.send("fetch-from-internet", response);
+                }
+            })
+        }
 
+        ipcRenderer.on("back-fetch-from-internet", (event, data)=>{
+            progressView.close();
+            if (data.status == false) {
+                alertModal("The URL you entered is not valid.", "error");
+            }
+            else {
+                // Ekhane data.contentType theke syntax highlighting choose korte hobe
+                notefinity.add(data.contents, null, "text");
+            }
+        })
 
     </script>
 </body>

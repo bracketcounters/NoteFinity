@@ -99,13 +99,18 @@ function alertModal(message="Alert", type="info") {
     }
 }
 
-function promptModal(prompt="Enter value", defaultValue="", type=null) {
+function promptModal(prompt="Enter value", defaultValue="", type=null, inputType="text", required=true) {
     let element = document.createElement("div");
     element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000] promptParent");
 
+    let requiredHTML = "required"
+    if (!required) {
+        requiredHTML = "";
+    }
+
     element.innerHTML = `<form id="promptForm" class="bg-white rounded p-4 max-w-[400px] w-[90%] z-50 promptModal">
     <h3 class="text-sm font-semibold text-black">${prompt}</h3>
-    <input type="text" id="promptInput" class="text-sm py-0.5 mt-1 w-full border-b border-b-gray-400 outline-0" value="${defaultValue}">
+    <input type="${inputType}" id="promptInput" class="text-sm py-0.5 mt-1 w-full border-b border-b-gray-400 outline-0" value="${defaultValue}" ${requiredHTML}>
     <div data-label="promptForm" class="flex space-x-1 my-2">
         <button id="promptButtonOk" type="submit" class="bg-green-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-green-200">Ok</button>
         <button id="promptButtonCancel" type="button" class="bg-sky-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-sky-200">Cancel</button>
@@ -122,12 +127,12 @@ function promptModal(prompt="Enter value", defaultValue="", type=null) {
         _id("promptInput").select();
         _id("promptInput").focus();
     }
-    window.addEventListener("keydown", (e)=>{
-        if (e.key == "Escape") {
-            try {document.body.removeChild(element);} catch(err){}
-        }
-    })
     return new Promise((resolve, reject)=>{
+        window.addEventListener("keydown", (e)=>{
+            if (e.key == "Escape") {
+                try {document.body.removeChild(element); resolve(false);} catch(err){}
+            }
+        })
         _id("promptButtonCancel").addEventListener("click", ()=>{
             document.body.removeChild(element);
             resolve(false);
@@ -172,50 +177,34 @@ class ProgressView {
         document.body.appendChild(this.element);
         setTimeout(() => {
             this.close();
-        }, 10000);
+        }, 16000);
     }
 }
 
         // Drag and Drop Feature
         class FileDragger {
             constructor(text="Drag Files to Open") {
-                this.div = document.createElement("div");
-                this.div.setAttribute("class", "fixed inset-0 z-20 bg-[#ffffffbb] hidden justify-center items-center fileDraggerParent");
-                this.div.innerHTML = `<div class="border-2 border-gray-600 border-dashed p-8 w-[60vw] m-auto flex justify-center items-center pointer-events-none">
-                <p class="font-semibold text-gray-600">${text}</p>
-            </div>`;
                 this.opened = false;
             }
             open() {
                 return new Promise((resolve, reject)=>{
                     if (!this.opened) {
-                        document.body.appendChild(this.div);
-                        this.div.classList.remove("hidden");
-                        this.div.classList.add("flex");
                         this.opened = true;
-                        this.div.addEventListener("drop", (event)=>{
+                        document.addEventListener("drop", (event)=>{
                             let files = Array.from(event.dataTransfer.files);
                             this.close();
                             resolve(files);
                         })
-                        this.div.addEventListener("dragleave", (event)=>{
+                        document.addEventListener("dragleave", (event)=>{
                             this.close();
                             resolve([]);
                         })
-                    }
-                    else {
-                        this.div.classList.remove("hidden");
-                        this.div.classList.add("flex");
                     }
                 })
             }
             close() {
                 if (this.opened) {
-                    this.div.classList.remove("flex");
-                    this.div.classList.add("hidden");
-                    document.body.removeChild(this.div);
                     this.opened = false;
                 }
             }
         }
-

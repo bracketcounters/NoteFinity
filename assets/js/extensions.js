@@ -15,6 +15,7 @@ const extensionModes = {
   "clj": "clojure",
   "cljs": "clojure",
   "cljc": "clojure",
+  "cmd": "batchfile",
   "cobol": "cobol",
   "cob": "cobol",
   "cbl": "cobol",

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, protocol } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
@@ -29,7 +29,7 @@ function createWindow() {
         }
     })
     win.loadFile("src/pages/index.html");
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
     windowState.manage(win);
     ipcMain.on("appAction", (event, data)=>{
         if (data == "maximize") {
@@ -470,7 +470,37 @@ ipcMain.on("check-recent-file-open", (event, data)=>{
         returnData.exists = true;
     }
     event.reply("back-check-recent-fileopen", returnData);
+})
 
+ipcMain.on("fetch-from-internet", (event, data)=>{
+    let fetchProtocol;
+    if (data.startsWith("https")) {
+        fetchProtocol = require("https");
+    }
+    else {
+        fetchProtocol = require("http");
+    }
+
+    let returnData = {
+        status: false,
+    }
+    fetchProtocol.get(data, (res)=>{
+        let contentType = res.headers["content-type"];
+        let contents = "";
+        res.on("data", (chunk)=>{
+            contents += chunk;
+        });
+        res.on("end", ()=>{
+            returnData.status = true;
+            returnData.contents = contents;
+            if (contentType != undefined) {
+                returnData.contentType = contentType;
+            }
+            event.reply("back-fetch-from-internet", returnData);
+        })
+    }).on("error", (err)=>{
+        event.reply("back-fetch-from-internet", returnData);
+    })
 })
 
 app.on("ready", ()=>{
@@ -489,4 +519,3 @@ app.on("ready", ()=>{
         }
     }
 })
-
