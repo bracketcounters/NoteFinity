@@ -1396,8 +1396,58 @@
                 alertModal("The URL you entered is not valid.", "error");
             }
             else {
-                // Ekhane data.contentType theke syntax highlighting choose korte hobe
-                notefinity.add(data.contents, null, "text");
+                let contentType = "text";
+                let openAble = true;
+                console.log(data);
+                if (data.contentType != undefined) {
+                    if (data.contentType.includes("text/html")) {
+                        contentType = "html";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("application/javascript")) {
+                        contentType = "javascript";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("text/javascript")) {
+                        contentType = "javascript";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("text/css")) {
+                        contentType = "css";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("application/json")) {
+                        contentType = "json";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("text/plain")) {
+                        contentType = "text";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("text/xml")) {
+                        contentType = "xml";
+                        openAble = true;
+                    }
+                    else if (data.contentType.includes("image/svg")) {
+                        contentType = "svg";
+                        openAble = true;
+                    }
+                    else {
+                        openAble = false;
+                        contentType = "text";
+                    }
+                }
+                
+                if (openAble) {
+                    notefinity.add(data.contents, null, contentType);
+                }
+                else {
+                    confirmModal(`The file has a content-type of ${data.contentType}. Would you like to proceed with opening it?`).then(response=>{
+                        if (response) {
+                            notefinity.add(data.contents, null, contentType);
+                        }
+                    })
+                }
             }
         })
 
