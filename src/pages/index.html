@@ -99,7 +99,7 @@
                     <li onclick="editTab.openFindPanel();">Find (Ctrl+F)</li>
                     <li onclick="editTab.openFindReplacePanel();">Replace (Ctrl+H)</li>
                     <hr>
-                    <li>Copy to Clipboard</li>
+                    <li onclick="openModal('copytoclipboard')">Copy to Clipboard</li>
                     <hr>
                     <li onclick="insertDate()">Time/Date (F5)</li>
                     <hr>
@@ -398,7 +398,11 @@
                             mode: notefinity.editorElements[i].getAttribute("data-mode"),
                             modeChanged: notefinity.editorElements[i].getAttribute("data-mode-changed")
                         }
-                        fdb.insertData(insertableData);
+                        if (insertableData.filepath.toLowerCase().startsWith("untitled-") && insertableData.contents == "") {
+                        }
+                        else {
+                            fdb.insertData(insertableData);
+                        }
                     }
                 }).then(result=>{
                     progressView.modal("Quiting...");
@@ -476,6 +480,9 @@
                     tablist.change(1);
                 }
             }
+            if (event.keyCode == 27) {
+                notefinity.aceEditors[notefinity.activatedEditor].focus();
+            }
         });
 
         document.addEventListener("wheel", (event)=>{
@@ -517,6 +524,14 @@
             return parts[parts.length-1];
         }
 
+        function directoryNameOf(filepath) {
+            if (filepath.toLowerCase().startsWith("untitled-")) {
+                return " ";
+            }
+            let lastSlashIndex = filepath.lastIndexOf('\\');
+            let directoryPath = filepath.substring(0, lastSlashIndex + 1);
+            return directoryPath.substr(0, directoryPath.length-1);
+        }
 
 
 
@@ -1393,12 +1408,11 @@
         ipcRenderer.on("back-fetch-from-internet", (event, data)=>{
             progressView.close();
             if (data.status == false) {
-                alertModal("The URL you entered is not valid.", "error");
+                alertModal("Content fetch error. Check URL and internet connection.", "error");
             }
             else {
                 let contentType = "text";
                 let openAble = true;
-                console.log(data);
                 if (data.contentType != undefined) {
                     if (data.contentType.includes("text/html")) {
                         contentType = "html";
@@ -1440,17 +1454,67 @@
                 
                 if (openAble) {
                     notefinity.add(data.contents, null, contentType);
+                    fileChangeReflected(notefinity.activatedEditor);
+                    notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode-changed", true);
                 }
                 else {
                     confirmModal(`The file has a content-type of ${data.contentType}. Would you like to proceed with opening it?`).then(response=>{
                         if (response) {
                             notefinity.add(data.contents, null, contentType);
+                            fileChangeReflected(notefinity.activatedEditor);
+                            notefinity.editorElements[notefinity.activatedEditor].setAttribute("data-mode-changed", true);
                         }
                     })
                 }
             }
         })
 
+        openModal('copytoclipboard');
+
+        function copyToClipboard(text) {
+            let textarea = document.createElement("textarea");
+            textarea.innerHTML = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+        }
+
+
+
+        ipcRenderer.on("back-copy-to-clipboard", (event, data)=>{
+            console.log(data);
+            let currentEditor = notefinity.editorElements[notefinity.activatedEditor];
+            let copyAble;
+            switch (data) {
+                case "filepath":
+                    copyToClipboard(currentEditor.getAttribute("data-filepath"));
+                    break;
+                case "filename":
+                    copyToClipboard(filenameOf(currentEditor.getAttribute("data-filepath")));
+                    break;
+                case "dirpath":
+                    copyToClipboard(directoryNameOf(currentEditor.getAttribute("data-filepath")));
+                    break;
+                case "allfilepaths":
+                    copyAble = "";
+                    notefinity.editorElements.forEach(element => {
+                        copyAble += element.getAttribute("data-filepath") + "\n";
+                    });
+                    copyToClipboard(copyAble);
+                    break;
+                case "allfilenames":
+                    copyAble = "";
+                        notefinity.editorElements.forEach(element => {
+                            copyAble += filenameOf(element.getAttribute("data-filepath")) + "\n";
+                        });
+                    copyToClipboard(copyAble);
+                    break;
+
+                default:
+                    break;
+            }
+        })
     </script>
 </body>
 </html>

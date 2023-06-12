@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Copy to Clipboard</title>
+</head>
+<body class="select-none">
+    <div class="container p-2">
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="copyToClipboardAction('filepath')">Current File path</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="copyToClipboardAction('filename')">Current Filename</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="copyToClipboardAction('dirpath')">Current Directory Path</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="copyToClipboardAction('allfilepaths')">All File Paths</div>
+        <div class="text-sm w-full border-b p-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200" onclick="copyToClipboardAction('allfilenames')">All Filenames</div>
+    </div>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    
+    <script>
+
+        const { ipcRenderer } = require("electron");
+
+        function copyToClipboardAction(action) {
+            ipcRenderer.send("copy-to-clipboard", action);
+            window.close();
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.altKey) {
+                e.preventDefault();
+            }
+            if (e.keyCode == 27) {
+            window.close();
+            }
+        });
+    </script>
+</body>
+</html>

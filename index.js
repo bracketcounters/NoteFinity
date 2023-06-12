@@ -112,6 +112,10 @@ ipcMain.on("open-modal", (event, data)=>{
             let modalConvertCase = new Modal(300, 280, win, "src/pages/edit/convertcase.html", false);
             modalConvertCase.open();
             break;
+        case "copytoclipboard":
+            let modalCopyToClipboard = new Modal(280, 240, win, "src/pages/edit/copytoclipboard.html", true);
+            modalCopyToClipboard.open();
+            break;
 
         default:
             break;
@@ -474,16 +478,20 @@ ipcMain.on("check-recent-file-open", (event, data)=>{
 
 ipcMain.on("fetch-from-internet", (event, data)=>{
     let fetchProtocol;
-    if (data.startsWith("https")) {
-        fetchProtocol = require("https");
-    }
-    else {
-        fetchProtocol = require("http");
-    }
-
     let returnData = {
         status: false,
     }
+    if (data.startsWith("https")) {
+        fetchProtocol = require("https");
+    }
+    else if (data.startsWith("http")) {
+        fetchProtocol = require("http");
+    }
+    else {
+        event.reply("back-fetch-from-internet", returnData);
+        return;
+    }
+
     fetchProtocol.get(data, (res)=>{
         let contentType = res.headers["content-type"];
         let contents = "";
@@ -501,6 +509,10 @@ ipcMain.on("fetch-from-internet", (event, data)=>{
     }).on("error", (err)=>{
         event.reply("back-fetch-from-internet", returnData);
     })
+})
+
+ipcMain.on("copy-to-clipboard", (event, data)=>{
+    win.webContents.send("back-copy-to-clipboard", data);
 })
 
 app.on("ready", ()=>{

@@ -172,12 +172,9 @@ class ProgressView {
         catch(err) {}
     }
     loader() {
-        this.element.setAttribute("class", "bg-[#ffffff98] fixed inset-0 flex justify-center items-center z-40 progressModalParent");
+        this.element.setAttribute("class", "bg-[#ffffff98] fixed inset-0 flex justify-center items-center z-[1000] progressModalParent");
         this.element.innerHTML = `<img src="../../assets/icons/loader.svg" class="w-10 loaderAnimation">`
         document.body.appendChild(this.element);
-        setTimeout(() => {
-            this.close();
-        }, 16000);
     }
 }
 
