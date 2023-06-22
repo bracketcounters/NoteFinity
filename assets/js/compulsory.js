@@ -120,6 +120,10 @@ function promptModal(prompt="Enter value", defaultValue="", type=null, inputType
     if (type == "rename") {
         let selectionValue = _id("promptInput").value;
         let endRange = selectionValue.substr(0, selectionValue.length - extensionOf(selectionValue).length - 1);
+
+        if (selectionValue.indexOf(".") == -1) {
+            endRange = selectionValue;
+        }
         _id("promptInput").setSelectionRange(0, endRange.length);
         _id("promptInput").focus();
     }

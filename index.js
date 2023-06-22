@@ -29,7 +29,7 @@ function createWindow() {
         }
     })
     win.loadFile("src/pages/index.html");
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
     windowState.manage(win);
     ipcMain.on("appAction", (event, data)=>{
         if (data == "maximize") {
@@ -240,7 +240,6 @@ ipcMain.on("fileAction", (event, data)=>{
             filters: [
                 { 
                     name: 'Text File', 
-                    extensions: supportedExtensions
                 }
               ]
         }).then(result=>{
@@ -309,21 +308,76 @@ ipcMain.on("fileAction", (event, data)=>{
         }
         else if (data.action == "renameFile") {
             let renameTo = path.join(path.dirname(data.filepath), data.renameTo);
-            fs.rename(data.filepath, renameTo, (err)=>{
-                let returnData = {
-                    success: false,
-                    index: data.index
-                }
-                if (err) {
-                    returnData.reason = err;
-                    event.reply("rename-response", returnData);
+            let returnData = {
+                success: false,
+                index: data.index
+            }
+            fs.exists(renameTo, (exists)=>{
+                if (!exists) {
+                    fs.rename(data.filepath, renameTo, (err)=>{
+                        if (err) {
+                            returnData.reason = err;
+                            event.reply("rename-response", returnData);
+                        }
+                        else {
+                            returnData.success = true;
+                            returnData.filepath = renameTo
+                            event.reply("rename-response", returnData);
+                        }
+                    })
                 }
                 else {
-                    returnData.success = true;
-                    returnData.filepath = renameTo
+                    returnData.message = "File exists. Please choose a different name.";
                     event.reply("rename-response", returnData);
                 }
             })
+        }
+        else if (data.action == "savecopy") {
+            dialog.showSaveDialog({
+                filters: [
+                    {
+                        name: "Text File",
+                        extensions: supportedExtensions,
+                    }
+                ]
+            }).then(result=>{
+                if (!result.canceled) {
+                    fs.writeFile(result.filePath, data.contents, (err)=>{
+                        let returnData = {};
+                        if (err) {
+                            returnData = {
+                                action: "savecopy",
+                                success: false,
+                            }
+                        }
+                        else {
+                            returnData = {
+                                action: "savecopy",
+                                success: true,
+                                index: data.index,
+                            }
+                        }
+                        win.webContents.send("saveAlert", returnData);
+                    })
+                }
+            })
+        }
+        else if (data.action == "savemany") {
+            let returnData = {
+                action: "savemany",
+                saveDone: [],
+                saveFailed: []
+            };
+            data.data.forEach(element=>{
+                try {
+                    fs.writeFileSync(element.filepath, element.contents);
+                    returnData.saveDone.push(element.filepath);
+                }
+                catch(err) {
+                    returnData.saveFailed.push(element.filepath)
+                }
+            })
+            win.webContents.send("saveAlert", returnData);
         }
     }
 })
@@ -362,7 +416,7 @@ function backOpenFolder(folder) {
         let fileFolder = folder + "\\" + element;
         try {
             let stat = fs.statSync(fileFolder);
-            if (stat.isFile() && supportedExtensions.indexOf(extensionOf(fileFolder)) != -1) {
+            if (stat.isFile()) {
                 filelist.push(fileFolder);
             }
         }
@@ -384,7 +438,6 @@ function backOpenFolder(folder) {
     }
     */
     filelist.forEach(element => {
-        let textcontents = "";
         fs.readFile(element, "utf8", (err, data)=>{
             let backData = {
                 filepath: element,
@@ -438,7 +491,7 @@ ipcMain.on("reset-notefinity", (event, data)=>{
             const files = fs.readdirSync(folder);
             files.forEach(file=>{
                 let filepath = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images", file);
-                fs.unlinkSync(filepath)
+                fs.unlinkSync(filepath);
             })
         }
         catch(err) {}
@@ -515,16 +568,42 @@ ipcMain.on("copy-to-clipboard", (event, data)=>{
     win.webContents.send("back-copy-to-clipboard", data);
 })
 
+
+function createResetWindow() {
+    let resetWin = new BrowserWindow({
+        width: 400,
+        height: 260,
+        resizable: false,
+        minimizable: false,
+        autoHideMenuBar: true,
+        hasShadow: false,
+        icon: "assets/icons/notefinity.png",
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        }
+    });
+    resetWin.loadFile("src/pages/extra/reset.html");
+    if (win) {
+        win.close();
+    }
+    win = resetWin;
+}
+
 app.on("ready", ()=>{
     createWindow();
 
     const argv = process.argv.slice(2);
     if (argv.length > 0) {
         if (argv.indexOf("--update") != -1) {
-            console.log("Updating");
+            // console.log("Updating");
         }
+        else if (argv.indexOf("--reset") != -1) {
+            createResetWindow();
+        }
+
         else {
-            let fileLocation = path.resolve(argv[0]);
+            let fileLocation = path.resolve(argv[1]);
             setTimeout(() => {
                 win.webContents.send("back-openFile", fileLocation);
             }, 520);

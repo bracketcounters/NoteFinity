@@ -72,18 +72,19 @@
                     <li onclick="openFolder()">Open Folder</li>
                     <li onclick="openModal('openrecent')">Open Recent Files</li>
                     <li onclick="fileAction('savefile')">Save (Ctrl+S)</li>
-                    <li>Save As (Ctrl+Shift+S)</li>
-                    <li>Save All</li>
+                    <li onclick="fileAction('saveas')">Save as (Ctrl+Shift+S)</li>
+                    <li onclick="fileAction('savecopyas')">Save a Copy As</li>
+                    <li onclick="fileAction('saveall')">Save All</li>
                     <hr>
                     <li>Quick Export</li>
                     <hr>
                     <li onclick="renameFile()">Rename</li>
                     <hr>
                     <li onclick="tabitemClose(notefinity.activatedEditor);">Close (Ctrl+W)</li>
-                    <li>Close All</li>
-                    <li>Close All but Active Document</li>
-                    <li>Close All to the left</li>
-                    <li>Close All to the right</li>
+                    <li onclick="closeAllFiles()">Close All</li>
+                    <li onclick="closeAllButActiveDocument()">Close All but Active Document</li>
+                    <li onclick="closeToTheLeft()">Close All to the left</li>
+                    <li onclick="closeToTheRight()">Close All to the right</li>
                     <hr>
                     <li onclick="appAction('exit')">Exit</li>
                 </ul>
@@ -117,15 +118,15 @@
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                     <hr>
+                    <li onclick="openModal('chooselanguage')">Syntax Highlighting</li>
+                    <hr>
                     <li onclick="viewInApplication()">View File in Application</li>
                 </ul>
             </button>
             <button class="navlist-item">
                 <span>Options</span>
                 <ul class="navlist-sublist w-[9rem]">
-                    <li onclick="openModal('chooselanguage')">Choose Language</li>
                     <li onclick="fetchFromInternet()">Fetch From Internet</li>
-                    <li>Encrypt File</li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -430,6 +431,7 @@
                 event.preventDefault();
             }
             if (event.ctrlKey && event.key == "o") {
+                event.preventDefault();
                 fileAction("openfile");
             }
             if (event.ctrlKey && event.key == "n") {
@@ -464,6 +466,10 @@
                 event.preventDefault();
                 openLastRecentFile();
             }
+            if (event.ctrlKey && event.shiftKey && event.key == "S") {
+                event.preventDefault();
+                fileAction('saveas');
+            }
         });
 
         document.addEventListener("keyup", (event)=>{
@@ -482,6 +488,10 @@
             }
             if (event.keyCode == 27) {
                 notefinity.aceEditors[notefinity.activatedEditor].focus();
+            }
+            if (event.key == "F2") {
+                event.preventDefault();
+                renameFile();
             }
         });
 
@@ -760,12 +770,13 @@
 
         class FileSaver {
             constructor() {
+                this.untitledSaveAllShow = false;
             }
-            save() {
+            save(saveAs=false) {
                 let noteFinityIndex = notefinity.activatedEditor;
                 let filepath = notefinity.editorElements[noteFinityIndex].getAttribute("data-filepath");
                 let contents = notefinity.aceEditors[noteFinityIndex].getValue();
-                if (filepath.toLowerCase().startsWith("untitled-")) {
+                if (filepath.toLowerCase().startsWith("untitled-") || saveAs == true) {
                     ipcRenderer.send("fileAction", {
                         action: "savefile",
                         type: "untitled",
@@ -781,8 +792,45 @@
                         contents: contents,
                         index: noteFinityIndex
                     })
+                }   
+            }
+            saveAs() {
+                this.save(true);
+            }
+            saveCopy() {
+                let noteFinityIndex = notefinity.activatedEditor;
+                let filepath = notefinity.editorElements[noteFinityIndex].getAttribute("data-filepath");
+                let contents = notefinity.aceEditors[noteFinityIndex].getValue();
+                ipcRenderer.send("fileAction", {
+                    action: "savecopy",
+                    type: "copy",
+                    contents: contents,
+                    index: noteFinityIndex
+                })
+            }
+            saveAll() {
+                let fileData = [];
+                for (let i=0; i<notefinity.editorElements.length; i++) {
+                    let filepath = notefinity.editorElements[i].getAttribute("data-filepath");
+                    if (!filepath.toLowerCase().startsWith("untitled-")) {
+                        let data = {
+                            filepath: notefinity.editorElements[i].getAttribute("data-filepath"),
+                            contents: notefinity.aceEditors[i].getValue(),
+                        }
+                        fileData.push(data);
+                    }
+                    else {
+                        if (!this.untitledSaveAllShow) {
+                            this.untitledSaveAllShow = true;
+                            alertModal("Please save all untitled files manually", "info");
+                        }
+                    }
                 }
-                
+                ipcRenderer.send("fileAction", {
+                    action: "savemany",
+                    type: "many",
+                    data: fileData
+                });
             }
         }
 
@@ -821,6 +869,31 @@
                     return;
                 }
             }
+            else if (data.action == "savemany") {
+                for (let i=0; i<notefinity.editorElements.length; i++) {
+                    let element = notefinity.editorElements[i];
+                    if (data.saveDone.indexOf(element.getAttribute("data-filepath")) != -1) {
+                        fileSaveReflected(i);
+                    }
+                }
+                _cls("tabitem")[notefinity.activatedEditor].click();
+
+                if (data.saveFailed.length == 0) {
+                    return;
+                }
+                else {
+                    let result;
+                    if (data.saveFailed.length == 1) {
+                        result = data.saveFailed[0].toString();
+                    }
+                    else {
+                        let lastElement = data.saveFailed.pop();
+                        result = data.saveFailed.join(", ") + " and " + lastElement;
+                    }
+                    alertModal(`Unable to save ${result}`, "error");
+                }
+                
+            }
         })
 
         const saver = new FileSaver();
@@ -829,8 +902,17 @@
             if (action == "openfile") {
                 ipcRenderer.send("fileAction", "openfile");
             }
-            if (action == "savefile") {
+            else if (action == "savefile") {
                 saver.save();
+            }
+            else if (action == "saveas") {
+                saver.saveAs();
+            }
+            else if (action == "savecopyas") {
+                saver.saveCopy();
+            }
+            else if (action == "saveall") {
+                saver.saveAll();
             }
         }
 
@@ -1222,7 +1304,12 @@
                 notefinity.activateTab(notefinity.activatedEditor);
             }
             else {
-                alertModal("Unable to rename this file", "error");
+                if (data.message != undefined) {
+                    alertModal(data.message, "error");
+                }
+                else {
+                    alertModal("Unable to rename this file", "error");
+                }
             }
         })
 
@@ -1469,7 +1556,7 @@
             }
         })
 
-        openModal('copytoclipboard');
+        // openModal('copytoclipboard');
 
         function copyToClipboard(text) {
             let textarea = document.createElement("textarea");
@@ -1515,6 +1602,66 @@
                     break;
             }
         })
+
+        let closeDocumentAlertShow = false;
+        function closeAllFiles() {
+            for (let i = notefinity.editorElements.length-1; i > 0; i--) {
+                let editor = notefinity.editorElements[i];
+                if (editor.getAttribute("data-changed") == "false" || editor.getAttribute("data-changed") == false) {              
+                    tabitemClose(i);
+                }
+                else {
+                    if (!closeDocumentAlertShow) {
+                        alertModal("Please manually close all unsaved files");
+                        closeDocumentAlertShow = true;
+                    }
+                }
+            }
+            if (notefinity.editorElements.length == 1) {
+                tabitemClose(0);
+            }
+        }
+
+        let closeToTheDirectionAlertShow = false;
+        function closeToTheLeft() {
+            let preActivaedEditor = notefinity.activatedEditor;
+            let closeCount = 0;
+            for (let i = preActivaedEditor-1; i >= 0; i--) {
+                if (notefinity.editorElements[i].getAttribute("data-changed") == "false" || notefinity.editorElements[i].getAttribute("data-changed") == false) {
+                    tabitemClose(i);
+                    closeCount++;
+                }
+                else {
+                    if (!closeToTheDirectionAlertShow) {
+                        alertModal("Please manually close all unsaved files");
+                        closeToTheDirectionAlertShow = true;
+                    }
+                }
+            }
+            document.querySelectorAll(".tabitem")[preActivaedEditor-closeCount].click();
+        }
+
+        function closeToTheRight() {
+            let preActivaedEditor = notefinity.activatedEditor;
+            let editorLength = notefinity.editorElements.length;
+            for (let i = editorLength-1; i > preActivaedEditor; i--) {
+                if (notefinity.editorElements[i].getAttribute("data-changed") == "false" || notefinity.editorElements[i].getAttribute("data-changed") == false) {
+                    tabitemClose(i);
+                }
+                else {
+                    if (!closeToTheDirectionAlertShow) {
+                        alertModal("Please manually close all unsaved files");
+                        closeToTheDirectionAlertShow = true;
+                    }
+                }
+            }
+            document.querySelectorAll(".tabitem")[preActivaedEditor].click();
+        }
+        function closeAllButActiveDocument() {
+            closeToTheLeft();
+            closeToTheRight();
+        }
+
     </script>
 </body>
 </html>
