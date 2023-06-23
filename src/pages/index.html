@@ -127,6 +127,7 @@
                 <span>Options</span>
                 <ul class="navlist-sublist w-[9rem]">
                     <li onclick="fetchFromInternet()">Fetch From Internet</li>
+                    <li onclick="openModal('minifier')">Code Minifier</li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -517,6 +518,20 @@
                     defaultValue: defaultValue
                 }
                 ipcRenderer.send("open-mode-modal", data);
+            }
+            else if (modal == "minifier") {
+                let index = notefinity.activatedEditor;
+                let sourceCode = notefinity.aceEditors[index].getValue();
+                let mode = notefinity.editorElements[index].getAttribute("data-mode");
+                if (!["css", "javascript"].includes(mode)) {
+                    mode = "html";
+                }
+                let data = {
+                    code: sourceCode,
+                    mode: mode
+                }
+                localStorage.setItem("minifier-data", JSON.stringify(data));
+                ipcRenderer.send("open-modal", modal);
             }
             else {
                 ipcRenderer.send("open-modal", modal);
@@ -1661,6 +1676,7 @@
             closeToTheLeft();
             closeToTheRight();
         }
+
 
     </script>
 </body>

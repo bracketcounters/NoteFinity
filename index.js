@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, protocol } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
+const { Minifier } = require("./src/minifier");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
@@ -116,6 +117,10 @@ ipcMain.on("open-modal", (event, data)=>{
             let modalCopyToClipboard = new Modal(280, 240, win, "src/pages/edit/copytoclipboard.html", true);
             modalCopyToClipboard.open();
             break;
+        case "minifier":
+            let modalMinifier = new Modal(550, 356, win, "src/pages/options/minifier.html", true);
+            modalMinifier.open();
+            break;
 
         default:
             break;
@@ -123,7 +128,7 @@ ipcMain.on("open-modal", (event, data)=>{
 })
 
 ipcMain.on("open-mode-modal", (event, data)=>{
-    let modalLanguage = new Modal(320, 200, win, "src/pages/options/chooselanguage.html", true);
+    let modalLanguage = new Modal(320, 200, win, "src/pages/view/chooselanguage.html", true);
     modalLanguage.open();
     modalLanguage.getWebContents().then(response=>{
         response.send("languageData", data);
@@ -566,6 +571,26 @@ ipcMain.on("fetch-from-internet", (event, data)=>{
 
 ipcMain.on("copy-to-clipboard", (event, data)=>{
     win.webContents.send("back-copy-to-clipboard", data);
+});
+
+
+ipcMain.on("minify-code", (event, data)=>{
+    let minify = new Minifier(data.code);
+    let compressedCode = "";
+    switch (data.mode) {
+        case "html":
+            compressedCode = minify.getCompressedHTML(data.removeComments, data.collapseWhiteSpace, data.minifyCSS, data.minifyJS);
+            break;
+        case "css":
+            compressedCode = minify.getCompressedCSS();
+            break;
+        case "javascript":
+            compressedCode = minify.getCompressedJavaScript(data.toplevel).code;
+            break;
+        default:
+            break;
+    }
+    event.reply("back-minify-code", compressedCode);
 })
 
 
@@ -577,7 +602,7 @@ function createResetWindow() {
         minimizable: false,
         autoHideMenuBar: true,
         hasShadow: false,
-        icon: "assets/icons/notefinity.png",
+        icon: "assets/icons/notefinity-reset.ico",
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -590,13 +615,17 @@ function createResetWindow() {
     win = resetWin;
 }
 
+ipcMain.on("create-window-again", (event, data)=>{
+    createWindow();
+});
+
 app.on("ready", ()=>{
     createWindow();
 
     const argv = process.argv.slice(2);
     if (argv.length > 0) {
         if (argv.indexOf("--update") != -1) {
-            // console.log("Updating");
+            console.log("Updating");
         }
         else if (argv.indexOf("--reset") != -1) {
             createResetWindow();

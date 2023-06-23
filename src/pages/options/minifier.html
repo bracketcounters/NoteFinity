@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <style>
+        *::-webkit-scrollbar {
+            width: 10px;
+            background: transparent;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: rgba(70, 70, 70, 0.2);
+        }
+    </style>
+    <title>Code Minifier</title>
+</head>
+<body class="select-none bg-gray-50 flex justify-center items-center min-h-[92vh] overflow-hidden">
+    <form class="container p-4 space-y-4" id="compressForm">
+        <textarea class="w-full p-1 text-xs font-mono resize-none rounded border focus:outline-2 focus:outline-sky-500 outline-0" id="sourceCode" rows="10"></textarea>
+        <div class="flex justify-between items-center space-x-4">
+            <p class="text-gray-800 text-sm">Language:</p>
+            <select class="w-full outline-0 cursor-pointer rounded-sm text-sm p-0.5" id="mode">
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="javascript">JavaScript</option>
+            </select>
+        </div>
+
+        <div class="flex justify-between min-h-[20px]" id="optionContainer">
+            <!-- <div class="flex space-x-1 items-center">
+                <input type="checkbox" id="removeComments">
+                <label class="text-xs" for="removeComments">Remove Comments</label>
+            </div>
+            <div class="flex space-x-1 items-center">
+                <input type="checkbox" id="collapseWhiteSpaces">
+                <label class="text-xs" for="collapseWhiteSpaces">Collapse White Space</label>
+            </div>
+            <div class="flex space-x-1 items-center">
+                <input type="checkbox" id="minifyCSS">
+                <label class="text-xs" for="minifyCSS">Minify CSS</label>
+            </div>
+            <div class="flex space-x-1 items-center">
+                <input type="checkbox" id="minifyJS">
+                <label class="text-xs" for="minifyJS">Minify JavaScript</label>
+            </div> -->
+
+            <!-- <div class="flex space-x-1 items-center">
+                <input type="checkbox" id="maximumCompression">
+                <label class="text-xs" for="maximumCompression">Maximum Compression</label>
+            </div> -->
+        </div>
+
+        <div class="flex justify-end space-x-1">
+            <button id="compressButton" class="bg-sky-500 hover:bg-sky-600 focus:bg-sky-700 outline-0 text-white text-sm px-3 py-1 rounded" type="submit">Compress</button>
+            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" type="button" onclick="window.close()">Close</button>
+        </div>
+    </form>
+
+    <div id="codeMinifiedOptionsPanel" class="absolute bottom-[-150px] left-0 bg-gray-50 w-full h-[136px] p-4 flex items-center space-x-1 opacity-0 codeMinifiedOptionsPanel">
+        <div>
+            <button class="bg-sky-500 hover:bg-sky-600 focus:bg-sky-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="window.close()">Replace</button>
+            <button class="bg-green-500 hover:bg-green-600 focus:bg-green-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="window.close()">Open in New Tab</button>
+            <button class="bg-yellow-500 hover:bg-yellow-600 focus:bg-yellow-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="copyMinifiedCode(this)">Copy</button>
+            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="closeMinifierOptions()">Cancel</button>
+        </div>
+    </div>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+        const { ipcRenderer } = require("electron");
+
+        function showChange(){switch(_id("mode").value){case"html":_id("optionContainer").innerHTML='<div class="flex space-x-1 items-center"><input type="checkbox" id="removeComments" checked><label class="text-xs" for="removeComments">Remove Comments</label></div><div class="flex space-x-1 items-center"><input type="checkbox" id="collapseWhiteSpaces" checked><label class="text-xs" for="collapseWhiteSpaces">Collapse White Space</label></div><div class="flex space-x-1 items-center"><input type="checkbox" id="minifyCSS"><label class="text-xs" for="minifyCSS">Minify CSS</label></div><div class="flex space-x-1 items-center"><input type="checkbox" id="minifyJS"><label class="text-xs" for="minifyJS">Minify JavaScript</label></div>';break;case"css":_id("optionContainer").innerHTML="";break;case"javascript":_id("optionContainer").innerHTML='<div class="flex space-x-1 items-center"><input type="checkbox" id="maximumCompression"><label class="text-xs" for="maximumCompression">Maximum Compression</label></div>'}}
+
+        _id("mode").addEventListener("change", ()=>{
+            showChange();
+        })
+
+        let minifierData = localStorage.getItem("minifier-data");
+        if (minifierData != null) {
+            minifierData = JSON.parse(minifierData);
+        }
+        let originalSourceCode = minifierData.code;
+        _id("sourceCode").value = originalSourceCode;
+        _id("mode").value = minifierData.mode;
+        showChange();
+
+        _id("compressForm").addEventListener("submit", (e)=>{
+            e.preventDefault();
+            document.body.style.pointerEvents = "none";
+            _id("compressButton").innerHTML = "Compressing...";
+            let data = {
+                code: _id("sourceCode").value,
+            }
+            switch (_id("mode").value) {
+                case "html":
+                    data.mode = "html";
+                    data.removeComments = _id("removeComments").checked;
+                    data.collapseWhiteSpace = _id("collapseWhiteSpaces").checked;
+                    data.minifyCSS = _id("minifyCSS").checked;
+                    data.minifyJS = _id("minifyJS").checked;
+                    break;
+                case "css":
+                    data.mode = "css"
+                    break;
+                case "javascript":
+                    data.mode = "javascript";
+                    data.toplevel = _id("maximumCompression").checked;
+                    break;
+                default:
+                    break;
+            }
+            ipcRenderer.send("minify-code", data);
+            originalSourceCode = _id("sourceCode").value;
+        });
+
+        ipcRenderer.on("back-minify-code", (event, data)=>{
+            document.body.style.pointerEvents = "all";
+            _id("compressButton").innerHTML = "Compress";
+            if (data == false) {
+                alertModal("Unable to compress the code", "error");
+            }
+            else {
+                _id("codeMinifiedOptionsPanel").style.bottom = 0;
+                _id("codeMinifiedOptionsPanel").classList.remove("opacity-0");
+                _id("sourceCode").value = data;
+            }
+        });
+
+        function closeMinifierOptions() {
+            _id("codeMinifiedOptionsPanel").style.bottom = "-150px";
+            _id("codeMinifiedOptionsPanel").classList.add("opacity-0");
+            _id("sourceCode").value = originalSourceCode;
+        }
+
+        function copyMinifiedCode(elm) {
+            _id("sourceCode").select();
+            document.execCommand("copy");
+            _id("sourceCode").blur();
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            } else if (document.selection) {
+                document.selection.empty();
+            }
+            elm.innerHTML = "Copied";
+            setTimeout(() => {
+                elm.innerHTML = "Copy";
+            }, 1000);
+        }
+
+
+        window.addEventListener("keydown", (event)=>{
+            if (event.keyCode == 27) {
+                window.close();
+            }
+        })
+    </script>
+</body>
+</html>

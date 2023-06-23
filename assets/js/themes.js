@@ -152,5 +152,45 @@ const themes = {
     navigation: "bg-transparent hover:bg-teal-500 focus:bg-teal-500",
     navigationList: "bg-teal-600 text-gray-200 hover:text-white hover:bg-teal-700 active:text-white active:bg-teal-800",
     tabactive: "border-teal-800"
-  }  
+  },
+  "Neon Orange": {
+    playground: "bg-black text-orange-500",
+    navigation: "bg-transparent hover:bg-orange-700 focus:bg-orange-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-orange-500 hover:text-orange-500 hover:bg-orange-700 active:text-white active:bg-orange-900",
+    tabactive: "border-orange-700"
+  },
+  "Neon Yellow": {
+    playground: "bg-black text-yellow-500",
+    navigation: "bg-transparent hover:bg-yellow-700 focus:bg-yellow-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-yellow-500 hover:text-yellow-500 hover:bg-yellow-700 active:text-white active:bg-yellow-900",
+    tabactive: "border-yellow-700"
+  },
+  "Neon Pink": {
+    playground: "bg-black text-pink-500",
+    navigation: "bg-transparent hover:bg-pink-700 focus:bg-pink-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-pink-500 hover:text-pink-500 hover:bg-pink-700 active:text-white active:bg-pink-900",
+    tabactive: "border-pink-700"
+  },
+  "Neon Blue": {
+    playground: "bg-black text-sky-500",
+    navigation: "bg-transparent hover:bg-sky-700 focus:bg-sky-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-sky-500 hover:text-sky-500 hover:bg-sky-700 active:text-white active:bg-sky-900",
+    tabactive: "border-sky-700"
+  },
+  "Clear Sky": {
+    playground: "bg-white text-black",
+    navigation: "bg-transparent hover:bg-sky-100 focus:bg-sky-100 text-sky-800 hover:text-sky-800 focus:text-sky-800",
+    navigationList: "bg-sky-200 text-sky-800 hover:text-white hover:bg-sky-300 active:text-white active:bg-sky-400",
+    tabactive: "border-sky-400"
+  },
+  "Lemon Zest": {
+    playground: "bg-white text-black",
+    navigation: "bg-transparent hover:bg-yellow-100 focus:bg-yellow-100 text-yellow-800 hover:text-yellow-800 focus:text-yellow-800",
+    navigationList: "bg-yellow-200 text-yellow-800 hover:text-white hover:bg-yellow-300 active:text-white active:bg-yellow-400",
+    tabactive: "border-yellow-400"
+  }
 };

@@ -9,7 +9,7 @@
     @apply bg-slate-300;
 }
 .navlist-sublist {
-    @apply absolute bg-white shadow-lg left-0 rounded-md  max-h-[90vh] overflow-auto hidden;
+    @apply absolute bg-white shadow-lg left-0 rounded-md z-20 max-h-[90vh] overflow-auto hidden;
     animation: navlistSublistPlay 0.2s;
 }
 @keyframes navlistSublistPlay {
@@ -121,4 +121,8 @@
     from {
         @apply opacity-0;
     }
+}
+
+.codeMinifiedOptionsPanel {
+    transition: 0.36s;
 }

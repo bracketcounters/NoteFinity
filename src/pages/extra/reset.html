@@ -29,7 +29,12 @@
             };
             localStorage.clear();
             setTimeout(() => {
-                window.close();
+                confirmModal("NoteFinity has been reset successfully. Would you like to open NoteFinity now?").then(response=>{
+                    if (response) {
+                        ipcRenderer.send("create-window-again", true);
+                    }
+                    window.close();
+                })
             }, 1000);
         }
 
@@ -40,6 +45,10 @@
         window.addEventListener("keydown", (event)=>{
             if (event.altKey) {
                 event.preventDefault();
+            }
+            if (event.keyCode == 27) {
+                event.preventDefault();
+                window.close();
             }
         })
 
