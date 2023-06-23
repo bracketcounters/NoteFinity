@@ -222,6 +222,7 @@
                     });
                     this.aceEditors.push(editor);
                     editor.session.setUseWrapMode(this.wordWrap);
+                    editor.commands.bindKey("F1", null);
                     setTimeout(() => {
                         editor.addEventListener("input", ()=>{
                             fileChangeReflected(this.activatedEditor);
@@ -471,6 +472,10 @@
                 event.preventDefault();
                 fileAction('saveas');
             }
+            if (event.ctrlKey && event.altKey && event.key == "p") {
+                event.preventDefault();
+                openCommandPalette();
+            }
         });
 
         document.addEventListener("keyup", (event)=>{
@@ -490,7 +495,7 @@
             if (event.keyCode == 27) {
                 notefinity.aceEditors[notefinity.activatedEditor].focus();
             }
-            if (event.key == "F2") {
+            if (event.ctrlKey && event.key == "F2") {
                 event.preventDefault();
                 renameFile();
             }
@@ -1411,7 +1416,7 @@
             }
             else {
                 let filepath = notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath");
-                let noOpenExtensions = ["txt", "md", "json", "ini", "conf", "bat", "log", "gitignore", "npmignore", "ps1"];
+                let noOpenExtensions = ["txt", "md", "json", "ini", "conf", "bat", "log", "gitignore", "npmignore", "ps1", "css"];
                 if (!noOpenExtensions.includes(extensionOf(filepath))) {
                     ipcRenderer.send("open-in-application", filepath);
                 }
@@ -1677,6 +1682,16 @@
             closeToTheRight();
         }
 
+        ipcRenderer.on("return-code-minifier-action", (event, data)=>{
+            let editor = notefinity.aceEditors[notefinity.activatedEditor];
+            if (data.action == "replace") {
+                editor.setValue(data.code);
+            }
+            else if (data.action == "newtab") {
+                notefinity.add(text=data.code, null, data.mode);
+                fileChangeReflected(notefinity.activatedEditor);
+            }
+        })
 
     </script>
 </body>
