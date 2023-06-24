@@ -222,13 +222,13 @@
                     });
                     this.aceEditors.push(editor);
                     editor.session.setUseWrapMode(this.wordWrap);
-                    editor.commands.bindKey("F1", null);
+                    // editor.commands.bindKey("F1", null);
                     setTimeout(() => {
                         editor.addEventListener("input", ()=>{
                             fileChangeReflected(this.activatedEditor);
                         })
                     }, 200);
-                })
+                });
             }
             updateEditorElements() {
                 this.editorElements = document.querySelectorAll(".editor");
