@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, protocol } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
@@ -6,6 +6,7 @@ const { Minifier } = require("./src/minifier");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
+const { TextToSpeech } = require("./src/texttospeech");
 
 let win;
 function createWindow() {
@@ -23,10 +24,10 @@ function createWindow() {
         frame: false,
         minWidth: 312,
         minHeight: 120,
-        // alwaysOnTop: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
+            // devTools: false
         }
     })
     win.loadFile("src/pages/index.html");
@@ -121,6 +122,10 @@ ipcMain.on("open-modal", (event, data)=>{
             let modalMinifier = new Modal(550, 356, win, "src/pages/options/minifier.html", true);
             modalMinifier.open();
             break;
+        case "texttospeech":
+            let modalTextToSpeech = new Modal(550, 316, win, "src/pages/options/texttospeech.html", true);
+            modalTextToSpeech.open();
+            break;
 
         default:
             break;
@@ -163,6 +168,9 @@ ipcMain.on("add-textbox-image-action", (event, data)=>{
                     let storage2 = new FileStorage(filepath);
                     storage1.setData(storage2.getBinaryData());
                     event.reply("back-textbox-image-action", true);
+                    setTimeout(() => {
+                        delete storage1, storage2;
+                    }, 2000);
                 }
                 catch(err) {
                 }
@@ -184,6 +192,9 @@ ipcMain.on("refresh-textbox-images", (event, data)=>{
             }
         })
         event.reply("back-refresh-textbox-images", returnableFiles);
+        setTimeout(() => {
+            delete storage;
+        }, 2000);
     }
     catch(err) {
 
@@ -198,6 +209,9 @@ ipcMain.on("delete-textbox-image", (event, data)=>{
         let imageStorage = new DataStorage("bg-images", imagePath);
         imageStorage.delete();
         event.reply("delete-textbox-image-done", true);
+        setTimeout(() => {
+            delete imageStorage;
+        }, 2000);
     }
     catch(err) {
     }
@@ -237,7 +251,7 @@ ipcMain.on("reloadFileContents", (event, data)=>{
 })
 
 const supportedExtensions = ["txt", "abap", "abc", "as", "ada", "alda", "conf", "cls", "aql", "adoc", "asl", "asm", "ahk", "bat", "bib", "c", "cpp", "c9search", "cirru", "clj", "cob", 
-"coffee", "cfm", "cr", "cs", "csd", "orc", "sco", "css", "curly", "d", "dart", "diff", "django", "dockerfile", "dot", "drl", "edi", "e", "ejs", "ex", "elm", "erl", "f", "f90", "fs", "fsl", "ftl", "gcode", "feature", "gitignore", "glsl", "gbs", "go", "graphql", "groovy", "haml", "hbs", "hs", "lhs", "h", "haxe", "hx", "hjson", "html", "ini", "io", "ion", "jack", "jade", "java", "js", "jexl", "json", "json5", "jq", "jsp", "jssm", "jsx", "jl", "kt", "tex", "latte", "less", "liquid", "lisp", "ls", "log", "logic", "lgt", "lsl", "lua", "lp", "lucene", "makefile", "md", "mask", "m", "mz", "mediawiki", "mel", "mixal", "mc", "sql", "nim", "nix", "nsi", "njk", "ml", "mm", "objc", "objcpp", "pql", "pas", "pl", "php", "pig", "plsql", "ps1", "praat", "prisma", "properties", "proto", "pp", "py", "qml", "R", "raku", "cshtml", "rdoc", "red", "rhtml", "robot", "rst", "rb", "rs", "sac", "sass", "scad", "scala", "scm", "scrypt", "scss", "sh", "sjs", "slim", "tpl", "smithy", "snippets", "soy", "space", "rq", "styl", "svg", "swift", "tcl", "tf", "textile", "toml", "tsx", "ttl", "twig", "ts", "vala", "vbs", "vm", "v", "vhdl", "vfp", "wlk", "xml", "xq", "yaml", "zeek"];
+"coffee", "cfm", "cr", "cs", "csd", "orc", "sco", "css", "curly", "d", "dart", "diff", "django", "dockerfile", "dot", "drl", "edi", "e", "ejs", "ex", "elm", "erl", "f", "f90", "fs", "fsl", "ftl", "gcode", "feature", "gitignore", "glsl", "gbs", "go", "graphql", "groovy", "haml", "hbs", "hs", "lhs", "h", "haxe", "hx", "hjson", "html", "ini", "io", "ion", "jack", "jade", "java", "js", "jexl", "json", "json5", "jq", "jsp", "jssm", "jsx", "jl", "kt", "tex", "latte", "less", "liquid", "lisp", "ls", "log", "logic", "lgt", "lsl", "lua", "lp", "lucene", "makefile", "md", "mask", "m", "mz", "mediawiki", "mel", "mixal", "mc", "sql", "nim", "nix", "npmignore", "nsi", "njk", "ml", "mm", "objc", "objcpp", "pql", "pas", "pl", "php", "pig", "plsql", "ps1", "praat", "prisma", "properties", "proto", "pp", "py", "qml", "R", "raku", "cshtml", "rdoc", "red", "rhtml", "robot", "rst", "rb", "rs", "sac", "sass", "scad", "scala", "scm", "scrypt", "scss", "sh", "sjs", "slim", "tpl", "smithy", "snippets", "soy", "space", "rq", "styl", "svg", "swift", "tcl", "tf", "textile", "toml", "tsx", "ttl", "twig", "ts", "vala", "vbs", "vm", "v", "vhdl", "vfp", "wlk", "xml", "xq", "yaml", "zeek"];
 
 
 ipcMain.on("fileAction", (event, data)=>{
@@ -592,12 +606,44 @@ ipcMain.on("minify-code", (event, data)=>{
         default:
             break;
     }
-    delete minify;
     event.reply("back-minify-code", compressedCode);
+    delete minify;
 })
 
 ipcMain.on("code-minifier-action", (event, data)=>{
     win.webContents.send("return-code-minifier-action", data);
+})
+
+
+ipcMain.on("text-to-speech", (event, data)=>{
+    let ttsEngine = new TextToSpeech(data.text);
+    ttsEngine.getSpeech(data.voice).then(result=>{
+        event.reply("back-text-to-speech", result);
+        delete ttsEngine;
+    })
+})
+
+ipcMain.on("download-text-to-speech", (event, data)=>{
+    let storage = new DataStorage("tts", "notefinity_tts.mp3");
+    dialog.showSaveDialog({
+        filters: [
+            {
+                name: "Mp3 File",
+                extensions: ["mp3"],
+            }
+        ]
+    }).then(result=>{
+        if (!result.canceled) {
+            fs.writeFile(result.filePath, storage.getBinaryData(), (err)=>{
+                if (err) {
+
+                }
+                else {
+                    
+                }
+            })
+        }
+    })
 })
 
 

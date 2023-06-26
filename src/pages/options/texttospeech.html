@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Text to Speech</title>
+    <style>
+        *::-webkit-scrollbar {
+            width: 10px;
+            background: transparent;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: rgba(70, 70, 70, 0.2);
+        }
+    </style>
+</head>
+<body class="select-none overflow-hidden" style="background: #F1F3F4;">
+    <form class="container p-4 space-y-2.5" id="textToSpeechForm">
+        <textarea class="w-full p-1 text-xs font-mono resize-none rounded border focus:outline-2 focus:outline-green-500 outline-0" id="text" rows="10" style="background: #fbfbfb;"></textarea>
+        <div class="flex justify-between">
+            <p class="text-gray-800 text-sm">Voice:</p>
+            <select class="outline-0 cursor-pointer rounded-sm text-sm p-0.5" id="voiceSelection" style="background: #fbfbfb;">
+                <option value="">Select a Voice</option>
+            </select>
+        </div>
+        <div class="flex space-x-1">
+            <button type="submit" class="px-3 py-1 outline-0 text-sm bg-green-500 hover:bg-green-600 focus:bg-green-700 text-white rounded" id="generateButton">Generate</button>
+            <button type="button" class="px-3 py-1 outline-0 text-sm bg-red-500 hover:bg-red-600 focus:bg-red-700 text-white rounded" onclick="window.close()">Close</button>
+        </div>
+    </form>
+
+    <div class="absolute bottom-[-100px] left-0 w-full h-[96px] px-2 py-4 flex items-center audioContainer" style="background: #F1F3F4;" id="audioContainer">
+        <audio class="w-full h-8 outline-0 audio" id="audio" controls tabindex="-1">
+        </audio>
+        <div class="flex items-center">
+            <svg id="downloadIcon" class="w-5 h-5 mr-2.5 mt-0.5 cursor-pointer hover:fill-sky-600 transition-all" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            <svg id="cancelIcon" class="w-6 h-6 mr-5 mt-0.5 cursor-pointer hover:fill-red-600 transition-all" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </div>
+    </div>
+
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+        const { ipcRenderer, dialog } = require("electron");
+        const say = require("say");
+
+        let text = localStorage.getItem("temp-data");
+        if (text == null) {
+            text = "";
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+        _id("text").value = text;
+        
+        setTimeout(() => {
+            localStorage.setItem("temp-data", null);
+        }, 2000);
+
+        say.getInstalledVoices((err, voices)=>{
+            _id("voiceSelection").innerHTML = "";
+            voices.forEach(voice => {
+                let optionElm = document.createElement("option");
+                optionElm.value = voice;
+                optionElm.innerHTML = voice;
+                _id("voiceSelection").appendChild(optionElm);
+            });
+            if (voices.length == 0) {
+                _id("generateButton").innerHTML = "No Installed Voices";
+                _id("generateButton").style.pointerEvents = "none";
+                _id("generateButton").style.cursor = "default";
+                _id("generateButton").disabled = true;
+            }
+        })
+
+        _id("textToSpeechForm").addEventListener("submit", (event)=>{
+            event.preventDefault();
+            let voice = _id("voiceSelection").value;
+            let text = _id("text").value;
+            let data = {
+                voice: voice,
+                text: text
+            }
+            if (text.length > 10000) {
+                confirmModal("The text is longer than 10,000 characters, which may require more disk space. Do you want to continue?").then(response=>{
+                    if (response) {
+                        ipcRenderer.send("text-to-speech", data);
+                        document.body.style.pointerEvents = "none";
+                        _id("generateButton").style.cursor = "default";
+                        _id("generateButton").innerHTML = "Generating...";
+                    }
+                    else {
+                        return;
+                    }
+                })
+            }
+            else {
+                ipcRenderer.send("text-to-speech", data);
+                document.body.style.pointerEvents = "none";
+                _id("generateButton").style.cursor = "default";
+                _id("generateButton").innerHTML = "Generating...";
+            }
+        });
+
+        ipcRenderer.on("back-text-to-speech", (event, data)=>{
+            if (data == false) {
+                alertModal("Unable to convert the text into speech", "error");
+            }
+            else {
+                _id("audio").src = data + "?v=" + Math.random().toString();
+                _id("audioContainer").style.bottom = "0px";
+                _id("text").readOnly = true;
+            }
+                _id("generateButton").innerHTML = "Generate";
+                document.body.style.pointerEvents = "all";
+                _id("generateButton").style.cursor = "pointer";
+        });
+
+        _id("cancelIcon").addEventListener("click", ()=>{
+            _id("audio").pause();
+            _id("audioContainer").style.bottom = "-100px";
+            _id("text").readOnly = false;
+        });
+
+        _id("downloadIcon").addEventListener("click", ()=>{
+            ipcRenderer.send("download-text-to-speech", true);
+        })
+
+
+        
+        window.addEventListener("keydown", (event)=>{
+            if (event.keyCode == 27) {
+                window.close();
+            }
+            if (event.altKey) {
+                e.preventDefault();
+            }
+
+        })
+
+    </script>
+</body>
+</html>

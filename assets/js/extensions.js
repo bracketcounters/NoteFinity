@@ -102,6 +102,7 @@ const extensionModes = {
   "asm": "mips",
   "mixal": "mixal",
   "mc": "mushcode",
+  "npmignore": "text",
   "sql": "mysql",
   "conf": "nginx",
   "nim": "nim",
@@ -185,4 +186,4 @@ const extensionModes = {
 }
 
 const supportedExtensions = ["txt", "abap", "abc", "as", "ada", "alda", "conf", "cls", "aql", "adoc", "asl", "asm", "ahk", "bat", "bib", "c", "cpp", "c9search", "cirru", "clj", "cob", 
-"coffee", "cfm", "cr", "cs", "csd", "orc", "sco", "css", "curly", "d", "dart", "diff", "django", "dockerfile", "dot", "drl", "edi", "e", "ejs", "ex", "elm", "erl", "f", "f90", "fs", "fsl", "ftl", "gcode", "feature", "gitignore", "glsl", "gbs", "go", "graphql", "groovy", "haml", "hbs", "hs", "lhs", "h", "haxe", "hx", "hjson", "html", "ini", "io", "ion", "jack", "jade", "java", "js", "jexl", "json", "json5", "jq", "jsp", "jssm", "jsx", "jl", "kt", "tex", "latte", "less", "liquid", "lisp", "ls", "log", "logic", "lgt", "lsl", "lua", "lp", "lucene", "makefile", "md", "mask", "m", "mz", "mediawiki", "mel", "mixal", "mc", "sql", "nim", "nix", "nsi", "njk", "ml", "mm", "objc", "objcpp", "pql", "pas", "pl", "php", "pig", "plsql", "ps1", "praat", "prisma", "properties", "proto", "pp", "py", "qml", "R", "raku", "cshtml", "rdoc", "red", "rhtml", "robot", "rst", "rb", "rs", "sac", "sass", "scad", "scala", "scm", "scrypt", "scss", "sh", "sjs", "slim", "tpl", "smithy", "snippets", "soy", "space", "rq", "styl", "svg", "swift", "tcl", "tf", "textile", "toml", "tsx", "ttl", "twig", "ts", "vala", "vbs", "vm", "v", "vhdl", "vfp", "wlk", "xml", "xq", "yaml", "zeek"];
+"coffee", "cfm", "cr", "cs", "csd", "orc", "sco", "css", "curly", "d", "dart", "diff", "django", "dockerfile", "dot", "drl", "edi", "e", "ejs", "ex", "elm", "erl", "f", "f90", "fs", "fsl", "ftl", "gcode", "feature", "gitignore", "glsl", "gbs", "go", "graphql", "groovy", "haml", "hbs", "hs", "lhs", "h", "haxe", "hx", "hjson", "html", "ini", "io", "ion", "jack", "jade", "java", "js", "jexl", "json", "json5", "jq", "jsp", "jssm", "jsx", "jl", "kt", "tex", "latte", "less", "liquid", "lisp", "ls", "log", "logic", "lgt", "lsl", "lua", "lp", "lucene", "makefile", "md", "mask", "m", "mz", "mediawiki", "mel", "mixal", "mc", "sql", "nim", "nix", "npmignore", "nsi", "njk", "ml", "mm", "objc", "objcpp", "pql", "pas", "pl", "php", "pig", "plsql", "ps1", "praat", "prisma", "properties", "proto", "pp", "py", "qml", "R", "raku", "cshtml", "rdoc", "red", "rhtml", "robot", "rst", "rb", "rs", "sac", "sass", "scad", "scala", "scm", "scrypt", "scss", "sh", "sjs", "slim", "tpl", "smithy", "snippets", "soy", "space", "rq", "styl", "svg", "swift", "tcl", "tf", "textile", "toml", "tsx", "ttl", "twig", "ts", "vala", "vbs", "vm", "v", "vhdl", "vfp", "wlk", "xml", "xq", "yaml", "zeek"];

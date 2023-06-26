@@ -123,6 +123,6 @@
     }
 }
 
-.codeMinifiedOptionsPanel {
+.codeMinifiedOptionsPanel, .audioContainer {
     transition: 0.36s;
 }

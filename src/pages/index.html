@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
         *::-webkit-scrollbar {
-            width: 10px;
+            width: 15px;
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
@@ -128,6 +128,7 @@
                 <ul class="navlist-sublist w-[9rem]">
                     <li onclick="fetchFromInternet()">Fetch From Internet</li>
                     <li onclick="openModal('minifier')">Code Minifier</li>
+                    <li onclick="openModal('texttospeech')">Text to Speech</li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -222,7 +223,7 @@
                     });
                     this.aceEditors.push(editor);
                     editor.session.setUseWrapMode(this.wordWrap);
-                    // editor.commands.bindKey("F1", null);
+                    editor.commands.bindKey("F1", null);
                     setTimeout(() => {
                         editor.addEventListener("input", ()=>{
                             fileChangeReflected(this.activatedEditor);
@@ -256,7 +257,7 @@
 
                 let tabitem = document.createElement("div");
                 tabitem.setAttribute("class", "tabitem");
-                tabitem.setAttribute("draggable", true);
+                // tabitem.setAttribute("draggable", true);
                 if (filepath == null) {
                     tabitem.innerHTML = `<span class="tabitem-star hidden">*</span> <span class="tabitem-filename">${filename}-${this.untitledCount}</span> <span onclick="tabitemClose(${this.editorElements.length-1})" class="tabitem-close">&times;</span></div>`;
                 }
@@ -535,7 +536,16 @@
                     code: sourceCode,
                     mode: mode
                 }
-                localStorage.setItem("minifier-data", JSON.stringify(data));
+                localStorage.setItem("temp-data", JSON.stringify(data));
+                ipcRenderer.send("open-modal", modal);
+            }
+            else if (modal == "texttospeech") {
+                editTab.selectEditor();
+                let text = editTab.getSelection().text;
+                if (text == "") {
+                    text = notefinity.aceEditors[notefinity.activatedEditor].getValue();
+                }
+                localStorage.setItem("temp-data", text.toString());
                 ipcRenderer.send("open-modal", modal);
             }
             else {
@@ -1590,7 +1600,6 @@
 
 
         ipcRenderer.on("back-copy-to-clipboard", (event, data)=>{
-            console.log(data);
             let currentEditor = notefinity.editorElements[notefinity.activatedEditor];
             let copyAble;
             switch (data) {
@@ -1685,13 +1694,19 @@
         ipcRenderer.on("return-code-minifier-action", (event, data)=>{
             let editor = notefinity.aceEditors[notefinity.activatedEditor];
             if (data.action == "replace") {
-                editor.setValue(data.code);
+                editor.setValue("");
+                editor.insert(data.code);
             }
             else if (data.action == "newtab") {
                 notefinity.add(text=data.code, null, data.mode);
                 fileChangeReflected(notefinity.activatedEditor);
             }
         })
+
+        // setTimeout(() => {
+        //     openModal("texttospeech");
+        // }, 400);
+
 
     </script>
 </body>

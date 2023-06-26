@@ -28,41 +28,20 @@
         </div>
 
         <div class="flex justify-between min-h-[20px]" id="optionContainer">
-            <!-- <div class="flex space-x-1 items-center">
-                <input type="checkbox" id="removeComments">
-                <label class="text-xs" for="removeComments">Remove Comments</label>
-            </div>
-            <div class="flex space-x-1 items-center">
-                <input type="checkbox" id="collapseWhiteSpaces">
-                <label class="text-xs" for="collapseWhiteSpaces">Collapse White Space</label>
-            </div>
-            <div class="flex space-x-1 items-center">
-                <input type="checkbox" id="minifyCSS">
-                <label class="text-xs" for="minifyCSS">Minify CSS</label>
-            </div>
-            <div class="flex space-x-1 items-center">
-                <input type="checkbox" id="minifyJS">
-                <label class="text-xs" for="minifyJS">Minify JavaScript</label>
-            </div> -->
-
-            <!-- <div class="flex space-x-1 items-center">
-                <input type="checkbox" id="maximumCompression">
-                <label class="text-xs" for="maximumCompression">Maximum Compression</label>
-            </div> -->
         </div>
 
         <div class="flex justify-end space-x-1">
             <button id="compressButton" class="bg-sky-500 hover:bg-sky-600 focus:bg-sky-700 outline-0 text-white text-sm px-3 py-1 rounded" type="submit">Compress</button>
-            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" type="button" onclick="window.close()">Close</button>
+            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" type="button" onclick="closeWindow()">Close</button>
         </div>
     </form>
 
     <div id="codeMinifiedOptionsPanel" class="absolute bottom-[-150px] left-0 bg-gray-50 w-full h-[136px] p-4 flex items-center space-x-1 opacity-0 codeMinifiedOptionsPanel">
         <div>
-            <button class="bg-sky-500 hover:bg-sky-600 focus:bg-sky-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="replaceCode()">Replace</button>
-            <button class="bg-green-500 hover:bg-green-600 focus:bg-green-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="openCodeInNewTab()">Open in New Tab</button>
-            <button class="bg-yellow-500 hover:bg-yellow-600 focus:bg-yellow-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="copyMinifiedCode(this)">Copy</button>
-            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="closeMinifierOptions()">Cancel</button>
+            <button class="bg-sky-500 hover:bg-sky-600 focus:bg-sky-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="replaceCode()" tabindex="-1">Replace</button>
+            <button class="bg-green-500 hover:bg-green-600 focus:bg-green-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="openCodeInNewTab()" tabindex="-1">Open in New Tab</button>
+            <button class="bg-yellow-500 hover:bg-yellow-600 focus:bg-yellow-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="copyMinifiedCode(this)" tabindex="-1">Copy</button>
+            <button class="bg-red-500 hover:bg-red-600 focus:bg-red-700 outline-0 text-white text-sm px-3 py-1 rounded" onclick="closeMinifierOptions()" tabindex="-1">Cancel</button>
         </div>
     </div>
 
@@ -76,7 +55,7 @@
             showChange();
         })
 
-        let minifierData = localStorage.getItem("minifier-data");
+        let minifierData = localStorage.getItem("temp-data");
         if (minifierData != null && minifierData != "null") {
             minifierData = JSON.parse(minifierData);
         } else {
@@ -92,7 +71,7 @@
         _id("mode").value = minifierData.mode;
         showChange();
         setTimeout(() => {
-            localStorage.setItem("minifier-data", null);
+            localStorage.setItem("temp-data", null);
         }, 2000);
 
         _id("compressForm").addEventListener("submit", (e)=>{
@@ -125,7 +104,7 @@
         });
 
         ipcRenderer.on("back-minify-code", (event, data)=>{
-            document.body.style.pointerEvents = "all";
+            document.body.style.pointerEvents = "auto";
             _id("compressButton").innerHTML = "Compress";
             if (data == false) {
                 alertModal("Unable to minify the code", "error");
@@ -164,7 +143,7 @@
                 code: _id("sourceCode").value,
             }
             ipcRenderer.send("code-minifier-action", data);
-            window.close();
+            closeWindow();
         }
 
         function openCodeInNewTab() {
@@ -174,15 +153,25 @@
                 mode: _id("mode").value
             }
             ipcRenderer.send("code-minifier-action", data);
-            window.close();
+            closeWindow();
         }
 
 
         window.addEventListener("keydown", (event)=>{
             if (event.keyCode == 27) {
-                window.close();
+                closeWindow();
+            }
+            if (e.altKey) {
+                e.preventDefault();
             }
         })
+
+        function closeWindow() {
+            originalSourceCode = "";
+            delete originalSourceCode;
+            window.close();
+        }
+
     </script>
 </body>
 </html>

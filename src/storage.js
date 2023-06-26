@@ -37,6 +37,7 @@ class Storage {
             return data;
         }
         catch(err) {
+            return "";
         }
     }
 
@@ -46,6 +47,7 @@ class Storage {
             return data;
         }
         catch(err) {
+            return "";
         }
     }
 
@@ -97,6 +99,9 @@ class Storage {
         catch(err) {
             return false;
         }
+    }
+    getPath() {
+        return this.file;
     }
 }
 
