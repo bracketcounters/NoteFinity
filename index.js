@@ -490,9 +490,10 @@ ipcMain.on("toggle-full-screen-mode", (event, data)=>{
     }
 })
 
+let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
-        let tray = new Tray("assets/icons/notefinity.ico");
+        tray = new Tray("assets/icons/notefinity.ico");
         tray.setTitle("NoteFinity");
         tray.setToolTip("Show NoteFinity");
         win.hide();
