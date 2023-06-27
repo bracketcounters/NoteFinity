@@ -7,11 +7,14 @@
     <link rel="stylesheet" href="../../assets/css/style.css">
     <style>
         *::-webkit-scrollbar {
-            width: 15px;
+            width: 12px;
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
             background: rgba(70, 70, 70, 0.2);
+        }
+        .navlist-sublist::-webkit-scrollbar {
+            width: 8px;
         }
 
         input[type="checkbox"] {
@@ -117,6 +120,8 @@
                     <li style="display: flex; justify-content: space-between;" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
+                    <li onclick="toggleFullScreenMode()">Toggle Full Screen Mode (F11)</li>
+                    <li onclick="temporarilyHide()">Temporarily Hide</li>
                     <hr>
                     <li onclick="openModal('chooselanguage')">Syntax Highlighting</li>
                     <hr>
@@ -1260,6 +1265,26 @@
                 ipcRenderer.send("always-on-top", false);
                 alwaysOnTop = false;
                 element.getElementsByTagName("input")[0].checked = false;
+            }
+        }
+
+        function toggleFullScreenMode() {
+            ipcRenderer.send("toggle-full-screen-mode", true);
+            notefinity.aceEditors[notefinity.activatedEditor].focus();
+        }
+
+        let onceHidden = false;
+        function temporarilyHide() {
+            if (!onceHidden) {
+                alertModal("You can display NoteFinity from the system tray.").then(response=>{
+                    notefinity.aceEditors[notefinity.activatedEditor].focus();
+                    ipcRenderer.send("temporarily-hide", true);
+                    onceHidden = true;
+                })
+            }
+            else {
+                notefinity.aceEditors[notefinity.activatedEditor].focus();
+                ipcRenderer.send("temporarily-hide", true);
             }
         }
     

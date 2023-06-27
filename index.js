@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
@@ -483,6 +483,26 @@ ipcMain.on("always-on-top", (event, data)=>{
         win.setAlwaysOnTop(false);
     }
 })
+
+ipcMain.on("toggle-full-screen-mode", (event, data)=>{
+    if (data) {
+        win.setFullScreen(!win.isFullScreen());
+    }
+})
+
+ipcMain.on("temporarily-hide", (event, data)=>{
+    if (data) {
+        let tray = new Tray("assets/icons/notefinity.ico");
+        tray.setTitle("NoteFinity");
+        tray.setToolTip("Show NoteFinity");
+        win.hide();
+        tray.on("click", ()=>{
+            win.show();
+            tray.destroy();
+        })
+    }
+})
+
 
 ipcMain.on("check-font-data-triggered", (event, data)=>{
     win.webContents.send("check-font-data", true);
