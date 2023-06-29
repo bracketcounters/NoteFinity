@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Tray } = require("electron");
 const windowStateKeeper = require("electron-window-state")
 const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
@@ -6,7 +6,9 @@ const { Minifier } = require("./src/minifier");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
+const say = require("say");
 const { TextToSpeech } = require("./src/texttospeech");
+const open = require("open");
 
 let win;
 function createWindow() {
@@ -52,8 +54,10 @@ function createWindow() {
             app.relaunch();
             app.quit();
         }
-    })
+    });    
 }
+
+
 
 function randomString(length) {
     let result = "";
@@ -125,6 +129,10 @@ ipcMain.on("open-modal", (event, data)=>{
         case "texttospeech":
             let modalTextToSpeech = new Modal(550, 316, win, "src/pages/options/texttospeech.html", true);
             modalTextToSpeech.open();
+            break;
+        case "web-search":
+            let modalWebSearch = new Modal(400, 280, win, "src/pages/view/websearch.html");
+            modalWebSearch.open();
             break;
 
         default:
@@ -493,7 +501,8 @@ ipcMain.on("toggle-full-screen-mode", (event, data)=>{
 let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
-        tray = new Tray("assets/icons/notefinity.ico");
+        tray = new Tray("assets/icons/notefinity.png"); // For development
+        // tray = new Tray("resources/assets/icons/notefinity.png"); // For production
         tray.setTitle("NoteFinity");
         tray.setToolTip("Show NoteFinity");
         win.hide();
@@ -509,18 +518,6 @@ ipcMain.on("check-font-data-triggered", (event, data)=>{
     win.webContents.send("check-font-data", true);
 })
 
-function openWeb(url) {
-    try {
-        exec(`start ${url}`, (error, stdout, stderr)=>{
-            return;
-        })
-    }
-    catch(err) {}
-}
-
-ipcMain.on("open-web", (even, url)=>{
-    openWeb(url);
-})
 
 ipcMain.on("return-convert-case", (event, data)=>{
     win.webContents.send("back-convert-case", data);
@@ -541,9 +538,8 @@ ipcMain.on("reset-notefinity", (event, data)=>{
 })
 
 ipcMain.on("open-in-application", (event, data)=>{
-    const command = `explorer ${data}`;
     try {
-        exec(command);
+        open(data);
     }
     catch(err) {};
 })
@@ -635,6 +631,14 @@ ipcMain.on("code-minifier-action", (event, data)=>{
     win.webContents.send("return-code-minifier-action", data);
 })
 
+ipcMain.on("get-installed-voices", (event, data)=>{
+    say.getInstalledVoices((err, voices)=>{
+        try {
+            event.reply("back-get-installed-voices", voices);
+        }
+        catch(err) {}
+    })
+})
 
 ipcMain.on("text-to-speech", (event, data)=>{
     let ttsEngine = new TextToSpeech(data.text);
@@ -693,23 +697,52 @@ ipcMain.on("create-window-again", (event, data)=>{
     createWindow();
 });
 
-app.on("ready", ()=>{
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+}
+else {
+    app.on("ready", ()=>{
+        const argv = process.argv.slice(2); // For development
+        // const argv = process.argv.slice(1); // For production
+        if (argv.length > 0) {
+            if (argv.indexOf("--update") != -1) {
+                console.log("Updating");
+            }
+            else if (argv.indexOf("--version") != -1) {
+                console.log("1.0.0");
+                process.exit();
+            }
+            else if (argv.indexOf("--reset") != -1) {
+                createResetWindow();
+                return;
+            }
+            else if (argv.indexOf("--help") != -1) {
+                process.exit();
+            }
+            
+            else {
+                let fileLocation = path.resolve(argv[1]);
+                setTimeout(() => {
+                    win.webContents.send("back-openFile", fileLocation);
+                }, 520);
+            }
+    }
     createWindow();
+})
+}
 
-    const argv = process.argv.slice(2);
-    if (argv.length > 0) {
-        if (argv.indexOf("--update") != -1) {
-            console.log("Updating");
+app.on("second-instance", ()=>{
+    if (win) {
+        if (win.isMinimized()) {
+            win.maximize();
         }
-        else if (argv.indexOf("--reset") != -1) {
-            createResetWindow();
+        if (!win.isVisible()) {
+            win.show();
+            tray.destroy();
         }
-
-        else {
-            let fileLocation = path.resolve(argv[1]);
-            setTimeout(() => {
-                win.webContents.send("back-openFile", fileLocation);
-            }, 520);
-        }
+        win.focus();
     }
 })
+

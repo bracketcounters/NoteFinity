@@ -43,14 +43,13 @@
     <script src="../../../assets/js/compulsory.js"></script>
     <script>
         const { ipcRenderer, dialog } = require("electron");
-        const say = require("say");
 
         let text = localStorage.getItem("temp-data");
         if (text == null) {
             text = "";
             setTimeout(() => {
                 location.reload();
-            }, 2000);
+            }, 5000);
         }
         _id("text").value = text;
         
@@ -58,21 +57,26 @@
             localStorage.setItem("temp-data", null);
         }, 2000);
 
-        say.getInstalledVoices((err, voices)=>{
+        ipcRenderer.send("get-installed-voices", true);
+
+        ipcRenderer.on("back-get-installed-voices", (event, data)=>{
             _id("voiceSelection").innerHTML = "";
-            voices.forEach(voice => {
+            data.forEach(voice => {
                 let optionElm = document.createElement("option");
                 optionElm.value = voice;
                 optionElm.innerHTML = voice;
                 _id("voiceSelection").appendChild(optionElm);
             });
-            if (voices.length == 0) {
+            if (data.length == 0) {
                 _id("generateButton").innerHTML = "No Installed Voices";
+                _id("generateButton").style.background = "#b0b0b0";
                 _id("generateButton").style.pointerEvents = "none";
                 _id("generateButton").style.cursor = "default";
                 _id("generateButton").disabled = true;
+                _id("voiceSelection").remove();
             }
         })
+
 
         _id("textToSpeechForm").addEventListener("submit", (event)=>{
             event.preventDefault();

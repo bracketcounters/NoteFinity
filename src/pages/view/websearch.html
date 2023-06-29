@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Choose Search Engine</title>
+</head>
+<body class="flex justify-center items-center min-h-[96vh] select-none">
+
+    <div class="container p-2 rounded overflow-hidden">
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('www.google.com/search?q=')">Google</div>
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('www.bing.com/search?q=')">Bing</div>
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('search.brave.com/search?q=')">Brave</div>
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('www.yahoo.com/search?q=')">Yahoo</div>
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('duckduckgo.com/?q=')">DuckDuckGo</div>
+        <div class="w-full p-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border-b text-sm cursor-pointer" onclick="searchWeb('wikipedia.org/w/index.php?search=')">Wikipedia</div>
+    </div>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+        const { ipcRenderer } = require("electron");
+        let text = localStorage.getItem("temp-data");
+        if (text == null) {
+            text = "";
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+
+        function searchWeb(web) {
+            ipcRenderer.send("open-in-application", `https://${web}${text}`);
+            window.close();
+        }
+
+        setTimeout(() => {
+            localStorage.setItem("temp-data", null);
+        }, 5000);
+        
+        window.addEventListener("keydown", (e) => {
+        if (e.altKey) {
+            e.preventDefault();
+        }
+        if (e.keyCode == 27) {
+          window.close();
+        }
+      });
+
+    </script>
+</body>
+</html>

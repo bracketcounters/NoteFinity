@@ -19,7 +19,7 @@
     }
 }
 .navlist-sublist li {
-    @apply cursor-pointer px-4 py-2;
+    @apply cursor-pointer px-4 py-2 z-20;
 }
 .navlist-item:focus .navlist-sublist {
     @apply block;

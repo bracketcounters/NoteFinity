@@ -55,6 +55,15 @@
         .context-menu li:hover {
         background-color: #ccc;
         }
+        .contextMenu li {
+            font-size: 12px;
+            padding: 6px;
+            padding-left: 14px;
+        }
+        .contextMenu {
+            animation: none;
+            z-index: 1000;
+        }
 
     </style>
     <style id="configurableStyle"></style>
@@ -164,6 +173,21 @@
         <!-- <div class="tabitem tabitem-active">Untitled <span class="tabitem-close">&times;</span></div> -->
     </div>
 
+    <ul class="absolute w-32 select-none overflow-auto rounded-md shadow-lg hidden navlist-sublist transition-none contextMenu" id="contextMenu">
+        <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo</li>
+        <li onclick="notefinity.aceEditors[notefinity.activatedEditor].redo()">Redo</li>
+        <hr>
+        <li onclick="editTab.cut()">Cut</li>
+        <li onclick="editTab.copy()">Copy</li>
+        <li onclick="editTab.paste()">Paste</li>
+        <li onclick="editTab.delete()">Delete</li>
+        <hr>
+        <li onclick="editTab.selectAll()">Select All</li>
+        <li onclick="convertCaseTo()">Convert Case to</li>
+        <hr>
+        <li onclick="editTab.webSearch()">Web Search</li>
+      </ul>
+
 
     <script src="../../assets/js/idb.min.js"></script>
     <script src="../../assets/js/ace.js"></script>
@@ -215,7 +239,7 @@
                 this.activatedEditor = 0;
                 this.wordWrap = true;
                 this.untitledCount = 0;
-                this.readOnly = false;     
+                this.readOnly = false;
                 this.recentFiles = [];        
             }
             initiate() {
@@ -499,6 +523,7 @@
                 }
             }
             if (event.keyCode == 27) {
+                _id("contextMenu").classList.add("hidden");
                 notefinity.aceEditors[notefinity.activatedEditor].focus();
             }
             if (event.ctrlKey && event.key == "F2") {
@@ -1159,6 +1184,37 @@
                 this.selectEditor();
                 this.editor.execCommand("replace");
             }
+            selectAll() {
+                this.selectEditor();
+                this.editor.selectAll();
+            }
+            cut() {
+                this.selectEditor();
+                document.execCommand("copy");
+                this.editor.session.remove(this.getSelection().range);
+            }
+            copy() {
+                document.execCommand("copy");
+            }
+            delete() {
+                this.selectEditor();
+                this.editor.session.remove(this.getSelection().range);
+            }
+            paste() {
+                this.selectEditor();
+                document.execCommand("paste");
+            }
+            webSearch() {
+                this.selectEditor();
+                let text = this.getSelection().text;
+                if (text == "") {
+                    alertModal("No text selected");
+                }
+                else {
+                    localStorage.setItem("temp-data", text.toString());
+                    openModal("web-search");
+                }
+            }
         }
 
         const editTab = new EditTab();
@@ -1316,7 +1372,7 @@
         }
 
         function openAboutNoteFinity() {
-            ipcRenderer.send("open-web", "https://www.bracketcounters.com");
+            ipcRenderer.send("open-in-application", "https://www.bracketcounters.com");
         }
 
         function renameFile() {
@@ -1728,11 +1784,31 @@
             }
         })
 
-        // setTimeout(() => {
-        //     openModal("texttospeech");
-        // }, 400);
+        window.addEventListener("contextmenu", (event)=>{
+            event.preventDefault();
+            let parentElement = event.target.parentElement.tagName.toLowerCase();
+            if (parentElement == "header" || parentElement == "ul" || parentElement == "li" || parentElement == "button") {
+                return;
+            }
+            _id("contextMenu").classList.remove("hidden");
+            _id("contextMenu").style.display = "block";
+            let left = event.pageX;
+            let top = event.pageY;
+            if (left + 130 > window.innerWidth) {
+                left -= 130;
+            }
+            if (top + 280 > window.innerHeight) {
+                top -= 300;
+            }
+            _id("contextMenu").style.left = left + "px";
+            _id("contextMenu").style.top = top + "px";
+        })
+        window.addEventListener("click", (event)=>{
+            _id("contextMenu").classList.add("hidden");
+            _id("contextMenu").style.display = "none";
+        })
 
-
+        
     </script>
 </body>
 </html>
