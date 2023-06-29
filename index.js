@@ -118,6 +118,17 @@ ipcMain.on("open-modal", (event, data)=>{
             let modalConvertCase = new Modal(300, 280, win, "src/pages/edit/convertcase.html", false);
             modalConvertCase.open();
             break;
+        case "convert-case-to-single":
+            let modalConvertCaseSingle = new Modal(300, 280, win, "src/pages/edit/convertcase.html", true);
+            modalConvertCaseSingle.open();
+            modalConvertCaseSingle.getWebContents().then(response=>{
+                try {
+                    response.webContents.send("convert-single", true);
+                }
+                catch(err) {}
+            })
+            break;
+
         case "copytoclipboard":
             let modalCopyToClipboard = new Modal(280, 240, win, "src/pages/edit/copytoclipboard.html", true);
             modalCopyToClipboard.open();
@@ -131,7 +142,7 @@ ipcMain.on("open-modal", (event, data)=>{
             modalTextToSpeech.open();
             break;
         case "web-search":
-            let modalWebSearch = new Modal(400, 280, win, "src/pages/view/websearch.html");
+            let modalWebSearch = new Modal(240, 280, win, "src/pages/view/websearch.html");
             modalWebSearch.open();
             break;
 
@@ -671,6 +682,34 @@ ipcMain.on("download-text-to-speech", (event, data)=>{
     })
 })
 
+ipcMain.on("markdown-previewer", (event, data)=>{
+    let markdownWindow = new BrowserWindow({
+        modal: false,
+        parent: win,
+        width: 400,
+        height: 600,
+        minWidth: 100,
+        minHeight: 200,
+        autoHideMenuBar: true,
+        icon: "assets/icons/notefinity.png",
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        }
+    })
+    markdownWindow.loadFile("src/pages/options/markdownpreviewer.html");
+    markdownWindow.webContents.on("will-navigate", (event, url)=>{
+        event.preventDefault();
+        try {
+            open(url);
+        }
+        catch(err) {}
+    })
+    markdownWindow.on("close", (event, data)=>{
+        win.webContents.send("markdown-closed", true);
+        delete markdownWindow;
+    })
+})
 
 function createResetWindow() {
     let resetWin = new BrowserWindow({

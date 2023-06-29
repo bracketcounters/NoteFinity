@@ -35,9 +35,25 @@
 
     const { ipcRenderer } = require("electron");
 
-    function modalConvertCase(caseName) {
+    let modalConvertCase = (caseName) => {
         ipcRenderer.send("return-convert-case", caseName);
     }
+
+    ipcRenderer.on("convert-single", (event, data)=>{
+        if (data) {
+            modalConvertCase = (caseName) => {
+                ipcRenderer.send("return-convert-case", caseName);
+                window.close();
+            }
+        }
+    })
+
+
+
+    // function modalConvertCase(caseName, single) {
+    //     ipcRenderer.send("return-convert-case", caseName);
+    // }
+
 
     window.addEventListener("keydown", (e) => {
         if (e.altKey) {

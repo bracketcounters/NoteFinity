@@ -104,8 +104,8 @@
             <button class="navlist-item">
                 <span>Edit</span>
                 <ul class="navlist-sublist w-40">
-                    <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo (Ctrl+Z)</li>
-                    <li onclick="notefinity.aceEditors[notefinity.activatedEditor].redo()">Redo (Ctrl+Y)</li>
+                    <li onclick="editTab.undo()">Undo (Ctrl+Z)</li>
+                    <li onclick="editTab.redo()">Redo (Ctrl+Y)</li>
                     <hr>
                     <li onclick="reloadFileContents()">Reload (Ctrl+R)</li>
                     <hr>
@@ -143,6 +143,7 @@
                     <li onclick="fetchFromInternet()">Fetch From Internet</li>
                     <li onclick="openModal('minifier')">Code Minifier</li>
                     <li onclick="openModal('texttospeech')">Text to Speech</li>
+                    <li onclick="previewMarkdown()">Preview Markdown</li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -174,8 +175,8 @@
     </div>
 
     <ul class="absolute w-32 select-none overflow-auto rounded-md shadow-lg hidden navlist-sublist transition-none contextMenu" id="contextMenu">
-        <li onclick="notefinity.aceEditors[notefinity.activatedEditor].undo()">Undo</li>
-        <li onclick="notefinity.aceEditors[notefinity.activatedEditor].redo()">Redo</li>
+        <li onclick="editTab.undo()">Undo</li>
+        <li onclick="editTab.redo()">Redo</li>
         <hr>
         <li onclick="editTab.cut()">Cut</li>
         <li onclick="editTab.copy()">Copy</li>
@@ -183,9 +184,11 @@
         <li onclick="editTab.delete()">Delete</li>
         <hr>
         <li onclick="editTab.selectAll()">Select All</li>
-        <li onclick="convertCaseTo()">Convert Case to</li>
+        <hr>
+        <li onclick="convertCaseTo(true)">Convert Case to</li>
         <hr>
         <li onclick="editTab.webSearch()">Web Search</li>
+        <li onclick="editTab.openURL()">Open URL</li>
       </ul>
 
 
@@ -1188,8 +1191,32 @@
                 this.selectEditor();
                 this.editor.selectAll();
             }
+            checkReadOnly() {
+                if (notefinity.readOnly) {
+                    alertModal("To allow modifications, please disable read-only mode.", "error");
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            undo() {
+                if (this.checkReadOnly()) {
+                    return;
+                }
+                notefinity.aceEditors[notefinity.activatedEditor].undo();
+            }
+            redo() {
+                if (this.checkReadOnly()) {
+                    return;
+                }
+                notefinity.aceEditors[notefinity.activatedEditor].redo();
+            }
             cut() {
                 this.selectEditor();
+                if (this.checkReadOnly()) {
+                    return;
+                }
                 document.execCommand("copy");
                 this.editor.session.remove(this.getSelection().range);
             }
@@ -1197,10 +1224,16 @@
                 document.execCommand("copy");
             }
             delete() {
+                if (this.checkReadOnly()) {
+                    return;
+                }
                 this.selectEditor();
                 this.editor.session.remove(this.getSelection().range);
             }
             paste() {
+                if (this.checkReadOnly()) {
+                    return;
+                }
                 this.selectEditor();
                 document.execCommand("paste");
             }
@@ -1213,6 +1246,16 @@
                 else {
                     localStorage.setItem("temp-data", text.toString());
                     openModal("web-search");
+                }
+            }
+            openURL() {
+                this.selectEditor();
+                let text = this.getSelection().text;
+                if (text == "") {
+                    alertModal("No text selected");
+                }
+                else {
+                    ipcRenderer.send("open-in-application", text);
                 }
             }
         }
@@ -1522,13 +1565,23 @@
             notefinity.readOnly = !notefinity.readOnly;
         }
 
-        function convertCaseTo() {
+        function convertCaseTo(single=false) {
             if (notefinity.readOnly) {
                 alertModal("To allow modifications, please disable read-only mode.", "error");
                 return;
             }
             else {
-                openModal("convert-case-to");
+                if (single) {
+                    editTab.selectEditor();
+                    if (editTab.getSelection().text == "") {
+                        alertModal("No text selected");
+                        return;
+                    }
+                    openModal("convert-case-to-single");
+                }
+                else {
+                    openModal("convert-case-to");
+                }
             }
         }
 
@@ -1782,6 +1835,24 @@
                 notefinity.add(text=data.code, null, data.mode);
                 fileChangeReflected(notefinity.activatedEditor);
             }
+        });
+
+        let markdownPreviewerOpened = false;
+        let intervalId;
+        function previewMarkdown() {
+            if (!markdownPreviewerOpened) {
+                markdownPreviewerOpened = true;
+                intervalId = setInterval(() => {
+                    let markdown = notefinity.aceEditors[notefinity.activatedEditor].getValue();
+                    localStorage.setItem("markdown-previewer", markdown.toString());
+                }, 600);
+                ipcRenderer.send("markdown-previewer", true);
+            }
+        }
+        ipcRenderer.on("markdown-closed", (event, data)=>{
+            clearInterval(intervalId);
+            localStorage.setItem("markdown-previewer", "");
+            markdownPreviewerOpened = false;
         })
 
         window.addEventListener("contextmenu", (event)=>{
@@ -1797,7 +1868,7 @@
             if (left + 130 > window.innerWidth) {
                 left -= 130;
             }
-            if (top + 280 > window.innerHeight) {
+            if (top + 300 > window.innerHeight) {
                 top -= 300;
             }
             _id("contextMenu").style.left = left + "px";

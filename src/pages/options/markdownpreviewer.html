@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown Preview</title>
+    <script src="../../../assets/js/markdown-support/shim.min.js"></script>
+    <script src="../../../assets/js/markdown-support/lodash.js"></script>
+    <link rel="stylesheet" href="../../../assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../../assets/css/github.min.css">
+    <script src="../../../assets/js/markdown-support/markdown-it.min.js"></script>
+    <script src="../../../assets/js/markdown-support/twemoji.min.js"></script>
+</head>
+<body>
+  <div style="padding: 10px;" id="markdownContent"></div>
+
+  <script>
+      function renderAndShowMarkdown() {
+        let md = window.markdownit();
+        let markdownText = localStorage.getItem("markdown-previewer");
+        if (markdownText == null) {
+            markdownText = "";
+        }
+        let html = md.render(markdownText);
+        document.getElementById('markdownContent').innerHTML = html;
+    }
+    renderAndShowMarkdown();
+    setInterval(() => {
+        renderAndShowMarkdown();
+    }, 600);
+
+    window.addEventListener("keydown", (event, data)=>{
+        if (event.keyCode == 27) {
+            event.preventDefault();
+            window.close();
+        }
+        if (event.altKey) {
+            event.preventDefault();
+        }
+    })
+
+  </script>
+</body>
+</html>
