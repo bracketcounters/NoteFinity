@@ -16,14 +16,25 @@
   <script>
       function renderAndShowMarkdown() {
         let md = window.markdownit();
-        let markdownText = localStorage.getItem("markdown-previewer");
-        if (markdownText == null) {
-            markdownText = "";
+        let markdown = localStorage.getItem("markdown-previewer");
+        if (markdown == null) {
+            return;
         }
-        let html = md.render(markdownText);
-        document.getElementById('markdownContent').innerHTML = html;
+        try {
+            markdown = JSON.parse(markdown);
+            if (markdown.exists == false) {
+                window.close();
+            }
+            let html = md.render(markdown.markdown);
+            document.getElementById('markdownContent').innerHTML = html;
+        }
+        catch(err) {
+            return;
+        }
     }
+
     renderAndShowMarkdown();
+
     setInterval(() => {
         renderAndShowMarkdown();
     }, 600);

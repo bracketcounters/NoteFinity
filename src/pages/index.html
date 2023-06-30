@@ -144,6 +144,8 @@
                     <li onclick="openModal('minifier')">Code Minifier</li>
                     <li onclick="openModal('texttospeech')">Text to Speech</li>
                     <li onclick="previewMarkdown()">Preview Markdown</li>
+                    <hr>
+                    <li style="display: flex; justify-content: space-between;" onclick="toggleAutoSave(this)">Auto Save <input type="checkbox"></li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -347,6 +349,15 @@
                     _id("fileNoteFinityStatus").innerHTML = star + _cls("tabitem-filename")[index].innerHTML;
                 }
                 catch(err) {}
+            }
+            checkExistance(editor) {
+                let existance = this.aceEditors.indexOf(editor);
+                if (existance < 0) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
             }
 
         }
@@ -1190,6 +1201,7 @@
             selectAll() {
                 this.selectEditor();
                 this.editor.selectAll();
+                this.focus();
             }
             checkReadOnly() {
                 if (notefinity.readOnly) {
@@ -1200,17 +1212,26 @@
                     return false;
                 }
             }
+            focus() {
+                try {
+                    this.selectEditor();
+                    this.editor.focus();
+                }
+                catch(err) {}
+            }
             undo() {
                 if (this.checkReadOnly()) {
                     return;
                 }
                 notefinity.aceEditors[notefinity.activatedEditor].undo();
+                this.focus();
             }
             redo() {
                 if (this.checkReadOnly()) {
                     return;
                 }
                 notefinity.aceEditors[notefinity.activatedEditor].redo();
+                this.focus();
             }
             cut() {
                 this.selectEditor();
@@ -1219,9 +1240,11 @@
                 }
                 document.execCommand("copy");
                 this.editor.session.remove(this.getSelection().range);
+                this.focus();
             }
             copy() {
                 document.execCommand("copy");
+                this.focus();
             }
             delete() {
                 if (this.checkReadOnly()) {
@@ -1229,6 +1252,7 @@
                 }
                 this.selectEditor();
                 this.editor.session.remove(this.getSelection().range);
+                this.focus();
             }
             paste() {
                 if (this.checkReadOnly()) {
@@ -1236,6 +1260,7 @@
                 }
                 this.selectEditor();
                 document.execCommand("paste");
+                this.focus();
             }
             webSearch() {
                 this.selectEditor();
@@ -1402,7 +1427,7 @@
                     progressView.modal("Resetting...");
                     setTimeout(() => {
                         ipcRenderer.send("appAction", "reload");
-                    }, 1000);
+                    }, 2600);
                 }
             })
         }
@@ -1842,18 +1867,40 @@
         function previewMarkdown() {
             if (!markdownPreviewerOpened) {
                 markdownPreviewerOpened = true;
+                let markdownEditor = notefinity.aceEditors[notefinity.activatedEditor];
+                let data = {};
                 intervalId = setInterval(() => {
-                    let markdown = notefinity.aceEditors[notefinity.activatedEditor].getValue();
-                    localStorage.setItem("markdown-previewer", markdown.toString());
+                    if (notefinity.checkExistance(markdownEditor)) {
+                        let markdown = markdownEditor.getValue();
+                        data = {
+                            exists: true,
+                            markdown: markdown.toString()
+                        }
+                    }
+                    else {
+                        data = {
+                            exists: false,
+                            markdown: null
+                        }
+                    }
+                    localStorage.setItem("markdown-previewer", JSON.stringify(data));
                 }, 600);
                 ipcRenderer.send("markdown-previewer", true);
             }
+            else {
+                alertModal("Markdown previewer is already running");
+            }
         }
+
         ipcRenderer.on("markdown-closed", (event, data)=>{
             clearInterval(intervalId);
             localStorage.setItem("markdown-previewer", "");
             markdownPreviewerOpened = false;
         })
+
+        function toggleAutoSave(elm) {
+
+        }
 
         window.addEventListener("contextmenu", (event)=>{
             event.preventDefault();

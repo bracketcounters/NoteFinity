@@ -8,7 +8,7 @@
     "go": "electron .",
     "watch": "nodemon --ext js,css,html --exec npm run start",
     "dev": "nodemon --ext js,css,html --exec electron .",
-    "pack": "electron-packager ./ NoteFinity --platform=win32 --icon=assets/icons/notefinity.ico --asar --arch-x64 --overwrite --ignore='temp'",
+    "pack": "electron-packager ./ NoteFinity --platform=win32 --icon=assets/icons/notefinity.ico --asar --arch-x64 --overwrite --ignore=temp",
     "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
   },
   "keywords": [],

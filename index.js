@@ -4,17 +4,19 @@ const { DataStorage, FileStorage } = require("./src/storage");
 const { Modal } = require("./src/modal");
 const { Minifier } = require("./src/minifier");
 const fs = require("fs");
-const path = require("path");
 const { exec } = require("child_process");
+const path = require("path");
 const say = require("say");
 const { TextToSpeech } = require("./src/texttospeech");
 const open = require("open");
+
+app.setPath('userData', path.join(process.env.APPDATA, "NoteFinity"));
 
 let win;
 function createWindow() {
     let windowState = windowStateKeeper({
         defaultWidth: 800,
-        defaultHeight: 600
+        defaultHeight: 620
     });
     win = new BrowserWindow({
         width: windowState.width,
@@ -537,11 +539,11 @@ ipcMain.on("return-convert-case", (event, data)=>{
 ipcMain.on("reset-notefinity", (event, data)=>{
     if (data) {
         try {
-            const folder = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images");
-            const files = fs.readdirSync(folder);
-            files.forEach(file=>{
-                let filepath = path.join(process.env.LOCALAPPDATA, "NoteFinity", "bg-images", file);
-                fs.unlinkSync(filepath);
+            const localAppdataFolder = path.join(process.env.LOCALAPPDATA, "NoteFinity");
+            const gpuCacheFolder = path.join(app.getPath("userData"), "GPUCache");
+            exec(`${path.resolve("tools/remover.exe")} "${localAppdataFolder}"`, (error, stdout, stderr)=>{
+            })
+            exec(`${path.resolve("tools/remover.exe")} "${gpuCacheFolder}"`, (error, stdout, stderr)=>{
             })
         }
         catch(err) {}
@@ -695,6 +697,7 @@ ipcMain.on("markdown-previewer", (event, data)=>{
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
+            // devTools: false
         }
     })
     markdownWindow.loadFile("src/pages/options/markdownpreviewer.html");
