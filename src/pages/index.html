@@ -88,8 +88,6 @@
                     <li onclick="fileAction('savecopyas')">Save a Copy As</li>
                     <li onclick="fileAction('saveall')">Save All</li>
                     <hr>
-                    <li>Quick Export</li>
-                    <hr>
                     <li onclick="renameFile()">Rename</li>
                     <hr>
                     <li onclick="tabitemClose(notefinity.activatedEditor);">Close (Ctrl+W)</li>
@@ -126,7 +124,7 @@
             <button class="navlist-item">
                 <span>View</span>
                 <ul class="navlist-sublist w-40">
-                    <li style="display: flex; justify-content: space-between;" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
+                    <li style="display: flex; justify-content: space-between;" id="navWordWrap" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                     <li onclick="toggleFullScreenMode()">Toggle Full Screen Mode (F11)</li>
@@ -145,7 +143,7 @@
                     <li onclick="openModal('texttospeech')">Text to Speech</li>
                     <li onclick="previewMarkdown()">Preview Markdown</li>
                     <hr>
-                    <li style="display: flex; justify-content: space-between;" onclick="toggleAutoSave(this)">Auto Save <input type="checkbox"></li>
+                    <li style="display: flex; justify-content: space-between;" id="navAutoSave" onclick="toggleAutoSave(this)">Auto Save <input type="checkbox"></li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -243,6 +241,7 @@
                 this.aceEditors = [];
                 this.activatedEditor = 0;
                 this.wordWrap = true;
+                this.autoSave = false;
                 this.untitledCount = 0;
                 this.readOnly = false;
                 this.recentFiles = [];        
@@ -408,9 +407,9 @@
         })
 
 
-
-        const {ipcRenderer} = require("electron");
+        const { ipcRenderer } = require("electron");
         const progressView = new ProgressView();
+
 
 
 
@@ -1898,8 +1897,25 @@
             markdownPreviewerOpened = false;
         })
 
-        function toggleAutoSave(elm) {
+        let editorConf = localStorage.getItem("editor-conf");
+        if (editorConf == null) {
+            editorConf = {};
+            editorConf.wordwrap = true;
+            editorConf.autoSave = false;
+        }
+        else {
+            editorConf = JSON.parse(editorConf);
+        }
 
+        if (editorConf.wordWrap == true) {
+            _id("navWordWrap").click();
+        }
+        if (editorConf.autoSave == true) {
+            _id("navAutoSave").click();
+        }
+
+        function toggleAutoSave(elm) {
+            
         }
 
         window.addEventListener("contextmenu", (event)=>{
