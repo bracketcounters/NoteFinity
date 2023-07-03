@@ -3,25 +3,27 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "updateUrl": "https://dl-1.bracketcounters.com/notefinity/updates/latest.json",
   "scripts": {
     "start": "tailwindcss -i src/style.css -o assets/css/style.css & electron .",
     "go": "electron .",
     "watch": "nodemon --ext js,css,html --exec npm run start",
     "dev": "nodemon --ext js,css,html --exec electron .",
-    "pack": "electron-packager ./ NoteFinity --platform=win32 --icon=assets/icons/notefinity.ico --asar --arch-x64 --overwrite --ignore=temp --asar-unpack='assets/icons/notefinity.png'",
+    "pack": "electron-packager ./ NoteFinity --platform=win32 --icon=assets/icons/notefinity.png --asar --arch-x64 --overwrite --ignore=temp --asar-unpack='assets/icons/notefinity.png'",
     "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "adm-zip": "^0.5.10",
     "clean-css": "^5.3.2",
+    "electron-updater": "^6.1.1",
     "electron-window-state": "^5.0.3",
     "html-minifier": "^4.0.0",
     "open": "^8.4.2",
     "say": "^0.16.0",
-    "uglify-js": "^3.17.4",
-    "zlib": "^1.0.5"
+    "uglify-js": "^3.17.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",

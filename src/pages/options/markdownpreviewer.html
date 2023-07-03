@@ -65,7 +65,7 @@
         renderAndShowMarkdown();
     }, 600);
 
-    _id("generatePDF").addEventListener("click", (event)=>{
+    function generatePDF() {
         _id("generatePDF").style.display = "none";
         setTimeout(() => {
             let content = document.body.innerHTML;
@@ -77,6 +77,16 @@
         setTimeout(() => {
             _id("generatePDF").style.display = "block";
         }, 600);
+    }
+
+    _id("generatePDF").addEventListener("click", (event)=>{
+        generatePDF();
+    })
+
+    window.addEventListener("keydown", (event)=>{
+        if (event.ctrlKey && event.key == "p") {
+            generatePDF();
+        }
     })
 
     window.addEventListener("keydown", (event)=>{

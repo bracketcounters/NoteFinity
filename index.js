@@ -9,6 +9,10 @@ const path = require("path");
 const say = require("say");
 const { TextToSpeech } = require("./src/texttospeech");
 const open = require("open");
+const http = require("http");
+const https = require("https");
+const AdmZip = require('adm-zip');
+const os = require("os");
 
 app.setPath('userData', path.join(process.env.APPDATA, "NoteFinity"));
 
@@ -541,12 +545,14 @@ ipcMain.on("reset-notefinity", (event, data)=>{
         try {
             const localAppdataFolder = path.join(process.env.LOCALAPPDATA, "NoteFinity");
             const gpuCacheFolder = path.join(app.getPath("userData"), "GPUCache");
-            exec(`${path.resolve("tools/remover.exe")} "${localAppdataFolder}"`, (error, stdout, stderr)=>{
+            exec(`${path.resolve("utility/remover.exe")} "${localAppdataFolder}"`, (error, stdout, stderr)=>{
             })
-            exec(`${path.resolve("tools/remover.exe")} "${gpuCacheFolder}"`, (error, stdout, stderr)=>{
+            exec(`${path.resolve("utility/remover.exe")} "${gpuCacheFolder}"`, (error, stdout, stderr)=>{
             })
         }
-        catch(err) {}
+        catch(err) {
+            console.log(err);
+        }
     }
 })
 
@@ -586,10 +592,10 @@ ipcMain.on("fetch-from-internet", (event, data)=>{
         status: false,
     }
     if (data.startsWith("https")) {
-        fetchProtocol = require("https");
+        fetchProtocol = https;
     }
     else if (data.startsWith("http")) {
-        fetchProtocol = require("http");
+        fetchProtocol = http;
     }
     else {
         event.reply("back-fetch-from-internet", returnData);
@@ -772,6 +778,16 @@ else {
             }
     }
     createWindow();
+    const update = new Updater();
+    update.checkForLatestVersion().then(response=>{
+        if (response) {
+            update.downloadUpdate().then(response=>{
+                if (response) {
+                    update.quitAndInstall();
+                }
+            })
+        }
+    })
 })
 }
 
@@ -787,4 +803,121 @@ app.on("second-instance", ()=>{
         win.focus();
     }
 })
+
+process.on("uncaughtException", (error)=>{
+    if (error.code == "ENOTFOUND") {
+        win.webContents.send("show-error", "You are offline or the hostname could not be resolved.");
+    }
+})
+
+class Updater {
+    constructor() {
+        this.info = this.getPackageInfo();
+        this.version = this.info.version;
+        this.updaterFolder = null;
+    }
+
+    getPackageInfo() {
+        try {
+            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString())
+            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString())
+            return info;
+        }
+        catch(err) {
+            return {
+                "version": "1.0.0",
+                "updateUrl": "https://dl-1.bracketcounters.com/notefinity/updates/latest.json",
+            };
+        }
+    }
+    fetchFile(url="", protocol=https, save=null) {
+        return new Promise((resolve, reject)=>{
+            protocol.get(url, (response)=>{
+                let data = "";
+                response.on("data", (chunk)=>{
+                    data += chunk;
+                });
+
+                if (save != null) {
+                    let file = fs.createWriteStream(save.filepath);
+                    response.pipe(file);
+                    file.on("finish", ()=>{
+                        file.close();
+                        resolve(true);
+                    })
+                }
+                else {   
+                    response.on("end", ()=>{
+                        resolve(data);
+                    });
+                }
+                response.on("error", ()=>{
+                    resolve(null);
+                });
+            })
+        })
+    }
+    checkForLatestVersion() {
+        return new Promise((resolve, reject)=>{
+            this.fetchFile(this.info.updateUrl, https).then(data=>{
+                if (data != null) {
+                    try {
+                        data = JSON.parse(data);
+                        if (data.version.toString() != this.version.toString()) {
+                            this.latest = data;
+                            resolve(true);
+                        }
+                        else {
+                            resolve(false);
+                        }
+                    }
+                    catch(err) {
+                        data = {};
+                    }
+                }
+            })
+        })
+    }
+    downloadUpdate() {
+        return new Promise((resolve, reject)=>{
+            let updateFileName = filenameOf(this.latest.downloadUrl);
+            let updateStorage = new DataStorage("updates", updateFileName);
+            let updateStoragePath = updateStorage.getPath();
+            this.fetchFile(this.latest.downloadUrl, https, {
+                filepath: updateStoragePath
+            }).then(result=>{
+                if (!result) {}
+                else {
+                    try {
+                    const zip = new AdmZip(updateStoragePath);
+                    let updateDirectory = path.dirname(updateStoragePath);
+                    zip.extractAllTo(updateDirectory, true);
+                    this.updaterFolder = path.dirname(updateStoragePath);
+                    updateStorage.delete();
+                    resolve(true);
+                }
+                catch (err) {
+                    win.webContents.send("show-error", "Can't install the update right now");
+                    resolve(false);
+                }
+            }
+        })
+    })
+    }
+    quitAndInstall() {
+        if (this.updaterFolder != null) {
+            let command = `Start-Process -FilePath ${path.resolve("utility/updater.exe")} -ArgumentList ${this.updaterFolder}, ${__dirname} -verb RunAs -WindowStyle Hidden`;
+            exec(`powershell.exe -Command ${command}`, (error, stdout, stderr)=>{
+                if (error) {
+                    console.log(error);
+                }
+                console.log(stdout);
+                console.log(stderr);
+            })
+        }
+        else {
+
+        }
+    }
+}
 

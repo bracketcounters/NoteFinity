@@ -4,8 +4,6 @@
 namespace fs = std::filesystem;
 
 void deleteFolderRecursive(const fs::path& path) {
-
-
     for (const auto& entry : fs::directory_iterator(path)) {
         const auto& entryPath = entry.path();
 
