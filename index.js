@@ -519,7 +519,7 @@ let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
         tray = new Tray("assets/icons/notefinity.png"); // For development
-        // tray = new Tray("resources/assets/icons/notefinity.png"); // For production
+        // tray = new Tray("resources/app.asar/assets/icons/notefinity.png"); // For production
         tray.setTitle("NoteFinity");
         tray.setToolTip("Show NoteFinity");
         win.hide();
@@ -778,16 +778,6 @@ else {
             }
     }
     createWindow();
-    const update = new Updater();
-    update.checkForLatestVersion().then(response=>{
-        if (response) {
-            update.downloadUpdate().then(response=>{
-                if (response) {
-                    update.quitAndInstall();
-                }
-            })
-        }
-    })
 })
 }
 
@@ -806,7 +796,7 @@ app.on("second-instance", ()=>{
 
 process.on("uncaughtException", (error)=>{
     if (error.code == "ENOTFOUND") {
-        win.webContents.send("show-error", "You are offline or the hostname could not be resolved.");
+        win.webContents.send("show-alert", ["You are offline or the hostname could not be resolved.", "error"]);
     }
 })
 
@@ -815,12 +805,13 @@ class Updater {
         this.info = this.getPackageInfo();
         this.version = this.info.version;
         this.updaterFolder = null;
+        this.downloadPercent = 0;
     }
 
     getPackageInfo() {
         try {
-            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString())
-            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString())
+            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
             return info;
         }
         catch(err) {
@@ -834,8 +825,24 @@ class Updater {
         return new Promise((resolve, reject)=>{
             protocol.get(url, (response)=>{
                 let data = "";
+                let downloadedSize = 0;
+                let percent = 0;
+                let totalSize = parseInt(response.headers['content-length'], 10);
                 response.on("data", (chunk)=>{
                     data += chunk;
+                    downloadedSize += chunk.length;
+                    let newPercent = Math.round((downloadedSize/totalSize) * 100);
+                    if (newPercent != percent) {
+                        percent = newPercent;
+                        if (global.updaterModal) {
+                            try {
+                                global.updaterModal.getWebContents().then(modal=>{
+                                    modal.send("update-downloaded-percentage", percent);
+                                })
+                            }
+                            catch(err) {console.log(err);}
+                        }
+                    }
                 });
 
                 if (save != null) {
@@ -844,6 +851,9 @@ class Updater {
                     file.on("finish", ()=>{
                         file.close();
                         resolve(true);
+                        global.updaterModal.getWebContents().then(modal=>{
+                            modal.send("update-downloaded-successful", true);
+                        })
                     })
                 }
                 else {   
@@ -897,7 +907,10 @@ class Updater {
                     resolve(true);
                 }
                 catch (err) {
-                    win.webContents.send("show-error", "Can't install the update right now");
+                    win.webContents.send("show-alert", ["Can't install the update right now", "error"]);
+                    if (global.updaterModal) {
+                        global.updaterModal.close();
+                    }
                     resolve(false);
                 }
             }
@@ -905,15 +918,23 @@ class Updater {
     })
     }
     quitAndInstall() {
+        win.webContents.send("backup-documents", true);
         if (this.updaterFolder != null) {
-            let command = `Start-Process -FilePath ${path.resolve("utility/updater.exe")} -ArgumentList ${this.updaterFolder}, ${__dirname} -verb RunAs -WindowStyle Hidden`;
+            let command = `Start-Process -FilePath ${path.resolve("utility/update.exe")} -ArgumentList ${this.updaterFolder}, ${path.dirname(__dirname)} -verb RunAs -WindowStyle Hidden`;
             exec(`powershell.exe -Command ${command}`, (error, stdout, stderr)=>{
                 if (error) {
-                    console.log(error);
+                    if (global.updaterModal) {
+                        global.updaterModal.getWebContents().then(response=>{
+                            response.send("show-alert", ["Can't update NoteFinity", "error"]);
+                        })
+                    }
+                } else {
+                    setTimeout(() => {
+                        app.quit();
+                    }, 1000);
                 }
-                console.log(stdout);
-                console.log(stderr);
             })
+
         }
         else {
 
@@ -921,3 +942,46 @@ class Updater {
     }
 }
 
+ipcMain.on("check-for-updates", (event, data)=>{
+    global.notefinityUpdater = new Updater();
+    global.notefinityUpdater.checkForLatestVersion().then(response=>{
+        if(response) {
+            global.updaterModal = new Modal(450, 300, win, "src/pages/extra/updates.html", false);
+            global.updaterModal.open();
+            global.updaterModal.getWebContents().then(response2=>{
+                try {
+                    response2.send("update-version", global.notefinityUpdater.latest.version);
+                }
+                catch(err) {
+                    setTimeout(() => {
+                        response2.send("update-version", global.notefinityUpdater.latest.version);
+                    }, 500);
+                }
+            })
+            global.updaterModal.getModal().then(responseModal=>{
+                responseModal.on("close", ()=>{
+                    win.webContents.send("update-checked-result", true);
+                    delete global.updaterModal;
+                    delete global.notefinityUpdater;
+                })
+            })
+        }
+        else {
+            win.webContents.send("show-alert", ["Latest version is already installed", "success"]);
+            win.webContents.send("update-checked-result", false);
+            delete global.notefinityUpdater;
+        }
+    })
+})
+
+ipcMain.on("download-updates-action", (event, data)=>{
+    if (global.notefinityUpdater) {
+        global.notefinityUpdater.downloadUpdate();
+    }
+})
+
+ipcMain.on("install-updates-quit", (event, data)=>{
+    if (global.notefinityUpdater) {
+        global.notefinityUpdater.quitAndInstall();
+    }
+})

@@ -19,7 +19,7 @@ function extensionOf(filename) {
     return parts.pop();
 }
 
-let confirmModalOpened = false;
+let anyModalOpened = false;
 function confirmModal(message="Are you sure?") {
     let element = document.createElement("div");
     element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000]  confirmModalParent");
@@ -30,23 +30,23 @@ function confirmModal(message="Are you sure?") {
         <button id="confirmModalButtonCancel" class="bg-red-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-red-200">Cancel</button>
     </div>
 </div>`;
-if (!confirmModalOpened) {
+if (!anyModalOpened) {
     document.body.appendChild(element);
     _id("confirmModalButtonOk").focus();
-    confirmModalOpened = true;
+    anyModalOpened = true;
     window.addEventListener("keydown", (e)=>{
         if (e.key == "Escape") {
-            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
+            try {document.body.removeChild(element); anyModalOpened = false;} catch(err){}
         }
     })
     return new Promise((resolve, reject)=>{
         _id("confirmModalButtonOk").addEventListener("click", ()=>{
             resolve(true);
-            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
+            try {document.body.removeChild(element); anyModalOpened = false;} catch(err){}
         });
         _id("confirmModalButtonCancel").addEventListener("click", ()=>{
             resolve(false);
-            try {document.body.removeChild(element); confirmModalOpened = false;} catch(err){}
+            try {document.body.removeChild(element); anyModalOpened = false;} catch(err){}
         });
     })
 }
@@ -57,7 +57,6 @@ else {
 }
 }
 
-let alertModalOpened = false;
 function alertModal(message="Alert", type="info") {
     let element = document.createElement("div");
     element.setAttribute("class", "bg-[#222222ad] fixed inset-0 flex items-center justify-center z-[1000]  confirmModalParent");
@@ -76,19 +75,19 @@ function alertModal(message="Alert", type="info") {
         <button id="confirmModalButtonOk" class="bg-${buttonColor}-600 text-white text-sm font-semibold px-1 py-0.5 outline-none rounded-sm outline-offset-0 focus:outline focus:outline-${buttonColor}-200">Ok</button>
     </div>
 </div>`;
-    if (!alertModalOpened) {
-        alertModalOpened = true;
+    if (!anyModalOpened) {
+        anyModalOpened = true;
         document.body.appendChild(element);
         _id("confirmModalButtonOk").focus();
         window.addEventListener("keydown", (e)=>{
             if (e.key == "Escape") {
-                try {document.body.removeChild(element); alertModalOpened = false;} catch(err){}
+                try {document.body.removeChild(element); anyModalOpened = false;} catch(err){}
             }
         })
         return new Promise((resolve, reject)=>{
             _id("confirmModalButtonOk").addEventListener("click", ()=>{
                 resolve(true);
-                try {document.body.removeChild(element); alertModalOpened = false;} catch(err){}
+                try {document.body.removeChild(element); anyModalOpened = false;} catch(err){}
             });
         })
     }

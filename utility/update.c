@@ -81,6 +81,8 @@ int main(int argc, char const *argv[]) {
     closedir(directory);
 
     printf("%s", "true");
+    sleep(1);
+    system("powershell.exe -Command \"Start-Process -FilePath '../NoteFinity.exe'\"");
 
     
     // for (int i = 1; i < argc; i++)

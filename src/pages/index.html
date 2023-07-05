@@ -161,6 +161,8 @@
                     <li onclick="openAboutNoteFinity()">About NoteFinity</li>
                     <li>Report a Bug</li>
                     <hr>
+                    <li onclick="checkForUpdates()" id="checkForUpdates">Check For Updates</li>
+                    <hr>
                     <li onclick="reloadNoteFinity()">Reload</li>
                     <li onclick="resetNoteFinity()">Reset</li>
                 </ul>
@@ -1898,8 +1900,8 @@
             markdownPreviewerOpened = false;
         })
 
-        ipcRenderer.on("show-error", (event, data)=>{
-            alertModal(data, "error");
+        ipcRenderer.on("show-alert", (event, data)=>{
+            alertModal(data[0], data[1]);
         })
 
         let editorConf = localStorage.getItem("editor-conf");
@@ -1944,6 +1946,23 @@
         window.addEventListener("click", (event)=>{
             _id("contextMenu").classList.add("hidden");
             _id("contextMenu").style.display = "none";
+        })
+
+        let checkForUpdatesProceed = false;
+        function checkForUpdates() {
+            if (!checkForUpdatesProceed) {
+                checkForUpdatesProceed = true;
+                ipcRenderer.send("check-for-updates", true);
+            }
+            editTab.focus();
+        }
+
+        ipcRenderer.on("update-checked-result", (event, data)=>{
+            checkForUpdatesProceed = false;
+        })
+
+        ipcRenderer.on("backup-documents", (event, data)=>{
+            backUpProcess();
         })
 
         

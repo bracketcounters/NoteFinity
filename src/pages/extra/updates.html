@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <title>Update NoteFinity</title>
+    <style>
+        .confirmModalParent {
+            margin-top: 0 !important;
+        }
+    </style>
+</head>
+<body class="select-none bg-gray-50 flex flex-col justify-center items-center min-h-[90vh] px-5 space-y-10 overflow-hidden">
+
+    <div class="flex justify-center items-center flex-col mt-2">
+        <img class="pointer-events-none w-14 mb-1" src="../../../assets/icons/notefinity-update.png" alt="Updates Available">
+        <h3 class="font-bold text-lg">Updates Available</h3>
+        <p class="text-xs text-gray-600" id="version">Latest Version</p>
+    </div>
+
+    <div class="block h-10" id="viewLaterAndDownload">
+        <div class="flex space-x-2">
+            <button class="text-sm px-2 py-1.5 w-32 rounded-full text-white outline-0 bg-gray-500 focus:outline-sky-200 focus:ring-2 focus:ring-gray-200" onclick="window.close();">Later</button>
+            <button class="text-sm px-2 py-1.5 w-32 rounded-full text-white outline-0 bg-sky-500 focus:ring-2 focus:ring-sky-200" id="downloadButton">Download</button>
+        </div>
+    </div>
+
+    <div class="hidden h-10 w-full" id="viewDownloadProgress">
+        <div class="h-1"></div>
+        <div class="flex justify-center items-center space-x-2">
+            <div class="bg-gray-200 rounded-full w-[60%] h-1.5">
+                <div class="bg-sky-500 rounded-full h-1.5" style="width: 0%;" id="progressLoader"></div>
+            </div>
+            <p class="text-xs" id="progressPercentage">0%</p>
+        </div>
+    </div>
+
+    <div class="hidden h-10" id="viewInstallUpdate">
+        <div class="flex flex-col justify-center items-center space-y-2">
+            <p class="text-xs text-red-600">*It will close NoteFinity. Please relaunch NoteFinity after updating.</p>
+            <button class="px-3 py-1 text-sm rounded bg-sky-500 text-white outline-0 focus:ring-2 focus:ring-sky-200" id="intallButton">Install Update</button>
+        </div>
+    </div>
+
+    <script src="../../../assets/js/compulsory.js"></script>
+    <script>
+        const { ipcRenderer } = require("electron");
+        window.addEventListener("keydown", (event)=>{
+            if (event.altKey) {
+                event.preventDefault();
+            }
+            if (event.keyCode == 27) {
+                window.close();
+            }
+        })
+
+        class View {
+            constructor() {
+                this.showLaterAndDownload();
+            };
+            hideAll() {
+                _id("viewLaterAndDownload").style.display = "none";
+                _id("viewDownloadProgress").style.display = "none";
+                _id("viewInstallUpdate").style.display = "none";
+            }
+            showLaterAndDownload() {
+                this.hideAll();
+                _id("viewLaterAndDownload").style.display = "block";
+            }
+            showDownloadProgress() {
+                this.hideAll();
+                _id("viewDownloadProgress").style.display = "block";
+            }
+            showInstallUpdate() {
+                this.hideAll();
+                _id("viewInstallUpdate").style.display = "block";
+            }
+        }
+
+        const view = new View();
+        _id("downloadButton").addEventListener("click", ()=>{
+            view.showDownloadProgress();
+            ipcRenderer.send("download-updates-action", true);
+        })
+
+        ipcRenderer.on("update-downloaded-percentage", (event, data)=>{
+            if (data != NaN) {
+                _id("progressLoader").style.width = data + "%";
+                _id("progressPercentage").innerHTML = data + "%";
+            }
+        })
+        ipcRenderer.on("update-downloaded-successful", (event, data)=>{
+            view.showInstallUpdate();
+        })
+        
+        _id("intallButton").addEventListener("click", ()=>{
+            ipcRenderer.send("install-updates-quit", true);
+        })
+        ipcRenderer.on("update-version", (event, data)=>{
+            _id("version").innerHTML = `Version ${data}`;
+        })
+        ipcRenderer.on("show-alert", (event, data)=>{
+            alertModal(data[0], data[1]);
+        })
+
+
+    </script>
+</body>
+</html>
