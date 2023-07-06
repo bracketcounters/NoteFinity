@@ -12,9 +12,8 @@ const open = require("open");
 const http = require("http");
 const https = require("https");
 const AdmZip = require('adm-zip');
-const os = require("os");
 
-app.setPath('userData', path.join(process.env.APPDATA, "NoteFinity"));
+app.setPath("userData", path.join(process.env.APPDATA, "NoteFinity"));
 
 let win;
 function createWindow() {
@@ -35,7 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            // devTools: false
+            // devTools: true // For Development
+            devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -518,8 +518,8 @@ ipcMain.on("toggle-full-screen-mode", (event, data)=>{
 let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
-        tray = new Tray("assets/icons/notefinity.png"); // For development
-        // tray = new Tray("resources/app.asar/assets/icons/notefinity.png"); // For production
+        // tray = new Tray("assets/icons/notefinity.png"); // For development
+        tray = new Tray("resources/app.asar/assets/icons/notefinity.png"); // For production
         tray.setTitle("NoteFinity");
         tray.setToolTip("Show NoteFinity");
         win.hide();
@@ -540,14 +540,26 @@ ipcMain.on("return-convert-case", (event, data)=>{
     win.webContents.send("back-convert-case", data);
 })
 
+function alertMessage(message) {
+    dialog.showErrorBox("Alert", message.toString());
+}
+
 ipcMain.on("reset-notefinity", (event, data)=>{
+    // Utility gulo ke copy kore local appdata folder er modhhe rekhe sekhan theke execute korte hobe
+    let removerExecutable = path.join(path.dirname(path.dirname(__dirname)), "utility", "remover.exe");
     if (data) {
         try {
             const localAppdataFolder = path.join(process.env.LOCALAPPDATA, "NoteFinity");
             const gpuCacheFolder = path.join(app.getPath("userData"), "GPUCache");
-            exec(`${path.resolve("utility/remover.exe")} "${localAppdataFolder}"`, (error, stdout, stderr)=>{
+            exec(`powershell.exe -Command \" Start-Process -FilePath '${removerExecutable}' -ArgumentList "${localAppdataFolder}" -WindowStyle Hidden\"`, (error, stdout, stderr)=>{
+                if (error) {
+                    alertMessage(`Error: ${error}`);
+                }
             })
-            exec(`${path.resolve("utility/remover.exe")} "${gpuCacheFolder}"`, (error, stdout, stderr)=>{
+            exec(`powershell.exe -Command \" Start-Process -FilePath '${removerExecutable}' -ArgumentList "${gpuCacheFolder}" -WindowStyle Hidden\"`, (error, stdout, stderr)=>{
+                if (error) {
+                    alertMessage(`Error: ${error}`);
+                }
             })
         }
         catch(err) {
@@ -752,11 +764,11 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        const argv = process.argv.slice(2); // For development
-        // const argv = process.argv.slice(1); // For production
+        // const argv = process.argv.slice(2); // For development
+        const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
-                console.log("Updating");
+                ipcMain.emit("check-for-updates");
             }
             else if (argv.indexOf("--version") != -1) {
                 console.log("1.0.0");
@@ -798,7 +810,42 @@ process.on("uncaughtException", (error)=>{
     if (error.code == "ENOTFOUND") {
         win.webContents.send("show-alert", ["You are offline or the hostname could not be resolved.", "error"]);
     }
-})
+});
+
+
+function checkArrayEquality(array1, array2) {
+  if (array1.length !== array2.length) {
+    return false;
+  }
+
+  for (let i = 0; i < array1.length; i++) {
+    if (array1[i] !== array2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function copyExecutables() {
+    const utilityLocal = path.resolve("utility");
+    const utilityStorage = new DataStorage("utility", "").getPath();
+
+    let utilityLocalFiles = fs.readdirSync(utilityLocal);
+    let utilityStorageFiles = fs.readdirSync(utilityStorage);
+
+    return new Promise((resolve, reject)=>{
+        if (checkArrayEquality(utilityLocalFiles, utilityStorageFiles)) {
+            resolve(true);
+        }
+        else {
+            utilityLocalFiles.forEach(file => {
+                let filePath = path.join(utilityLocal, file);
+                fs.copyFileSync(filePath, path.join(utilityStorage, file));
+            });
+            resolve(true);
+        }
+    })
+}
 
 class Updater {
     constructor() {
@@ -810,8 +857,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
-            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
@@ -888,6 +935,39 @@ class Updater {
             })
         })
     }
+    createBatchFile() {
+        try {
+            let updatesFile = new DataStorage("updates", "updates.tmp").getPath();
+            if (fs.statSync(updatesFile).size == 0) {
+                return false;
+            }
+            let currentDirectory = __dirname;
+            let batchFile = new DataStorage("update_additional", "updates_installer.bat");
+            let batchFileCode = `@echo off
+set "sourceFile=${updatesFile.toString()}"
+set "destinationFolder=${currentDirectory}"
+NET SESSION >nul 2>&1
+if %errorlevel% neq 0 (
+echo false
+pause
+exit /b
+)
+echo Moving file...
+move /Y "%sourceFile%" "%destinationFolder%"
+ping 127.0.0.1 -n 3 > nul
+start "" "${app.getPath('exe').toString()}"
+echo true
+del "%~f0"
+pause
+`;
+            batchFile.setData(batchFileCode);
+            this.installerBatchFile = batchFile.getPath();
+            return true;
+        }
+        catch(err) {
+            return false;
+        }
+    }
     downloadUpdate() {
         return new Promise((resolve, reject)=>{
             let updateFileName = filenameOf(this.latest.downloadUrl);
@@ -904,7 +984,12 @@ class Updater {
                     zip.extractAllTo(updateDirectory, true);
                     this.updaterFolder = path.dirname(updateStoragePath);
                     updateStorage.delete();
-                    resolve(true);
+                    if (this.createBatchFile()) {
+                        resolve(true);
+                    }
+                    else {
+                        resolve(false);
+                    }
                 }
                 catch (err) {
                     win.webContents.send("show-alert", ["Can't install the update right now", "error"]);
@@ -919,8 +1004,8 @@ class Updater {
     }
     quitAndInstall() {
         win.webContents.send("backup-documents", true);
-        if (this.updaterFolder != null) {
-            let command = `Start-Process -FilePath ${path.resolve("utility/update.exe")} -ArgumentList ${this.updaterFolder}, ${path.dirname(__dirname)} -verb RunAs -WindowStyle Hidden`;
+        if (this.updaterFolder != null && this.installerBatchFile) {
+            let command = `Start-Process -FilePath '${this.installerBatchFile}' -Verb RunAs -WindowStyle Hidden`;
             exec(`powershell.exe -Command ${command}`, (error, stdout, stderr)=>{
                 if (error) {
                     if (global.updaterModal) {
@@ -934,7 +1019,6 @@ class Updater {
                     }, 1000);
                 }
             })
-
         }
         else {
 
