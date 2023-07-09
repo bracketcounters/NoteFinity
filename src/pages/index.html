@@ -316,6 +316,7 @@
                 this.aceEditors[this.aceEditors.length-1].session.setMode(`ace/mode/${mode}`);
                 this.aceEditors[this.aceEditors.length-1].resize();
                 this.aceEditors[this.aceEditors.length-1].getSession().getUndoManager().reset();
+                this.aceEditors[this.aceEditors.length-1].focus(); // Upgradable --> First er dike focus hobe..
             }
 
             updateEditor(index) {

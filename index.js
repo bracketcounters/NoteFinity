@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            // devTools: true // For Development
-            devTools: false // For Production
+            devTools: true // For Development
+            // devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -518,15 +518,20 @@ ipcMain.on("toggle-full-screen-mode", (event, data)=>{
 let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
-        // tray = new Tray("assets/icons/notefinity.png"); // For development
-        tray = new Tray("resources/app.asar/assets/icons/notefinity.png"); // For production
-        tray.setTitle("NoteFinity");
-        tray.setToolTip("Show NoteFinity");
-        win.hide();
-        tray.on("click", ()=>{
-            win.show();
-            tray.destroy();
-        })
+        try {
+            // tray = new Tray("assets/icons/notefinity.png"); // For development
+            let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
+            tray = new Tray(trayIcon);
+            tray.setTitle("NoteFinity");
+            tray.setToolTip("Show NoteFinity");
+            win.hide();
+            tray.on("click", ()=>{
+                win.show();
+                tray.destroy();
+            })
+        }
+        catch(err) {
+        }
     }
 })
 
@@ -553,12 +558,12 @@ ipcMain.on("reset-notefinity", (event, data)=>{
             const gpuCacheFolder = path.join(app.getPath("userData"), "GPUCache");
             exec(`powershell.exe -Command \" Start-Process -FilePath '${removerExecutable}' -ArgumentList "${localAppdataFolder}" -WindowStyle Hidden\"`, (error, stdout, stderr)=>{
                 if (error) {
-                    alertMessage(`Error: ${error}`);
+                    // alertMessage(`Error: ${error}`); // For development
                 }
             })
             exec(`powershell.exe -Command \" Start-Process -FilePath '${removerExecutable}' -ArgumentList "${gpuCacheFolder}" -WindowStyle Hidden\"`, (error, stdout, stderr)=>{
                 if (error) {
-                    alertMessage(`Error: ${error}`);
+                    // alertMessage(`Error: ${error}`); // For development
                 }
             })
         }
@@ -764,8 +769,8 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        // const argv = process.argv.slice(2); // For development
-        const argv = process.argv.slice(1); // For production
+        const argv = process.argv.slice(2); // For development
+        // const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
@@ -776,33 +781,70 @@ else {
             }
             else if (argv.indexOf("--reset") != -1) {
                 createResetWindow();
-                return;
+                process.exit();
             }
             else if (argv.indexOf("--help") != -1) {
                 process.exit();
             }
             
             else {
-                let fileLocation = path.resolve(argv[1]);
-                setTimeout(() => {
-                    win.webContents.send("back-openFile", fileLocation);
-                }, 520);
+                if (argv.length == 1) {
+                    try {
+                        let fileLocation = path.resolve(argv[0]);
+                        setTimeout(() => {
+                            if (win) {
+                                win.webContents.send("back-openFile", fileLocation);
+                            }
+                            else {
+                                setTimeout(() => {
+                                    if (win) {
+                                        win.webContents.send("back-openFile", fileLocation);
+                                    }
+                                    else {
+                                        setTimeout(() => {
+                                            if (win) {
+                                                win.webContents.send("back-openFile", fileLocation);
+                                            }
+                                            else {
+                                                if (win) {
+                                                    win.webContents.send("back-openFile", fileLocation);
+                                                }
+                                            }
+                                        }, 1000);
+                                    }
+                                }, 1000);
+                            }
+                        }, 600);
+                    }
+                    catch(err) {
+                    }
+                }
             }
     }
     createWindow();
 })
 }
 
-app.on("second-instance", ()=>{
-    if (win) {
+app.on("second-instance", (event, commandLine, workingDirectory)=>{
+    if (typeof(win) == "object") {
         if (win.isMinimized()) {
             win.maximize();
         }
         if (!win.isVisible()) {
             win.show();
-            tray.destroy();
+            if (tray) {
+                tray.destroy();
+            }
         }
         win.focus();
+        setTimeout(() => {
+            win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
+        }, 520);
+    }
+    else {
+        setTimeout(() => {
+            win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
+        }, 1500);
     }
 })
 
@@ -857,8 +899,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
-            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
