@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            devTools: true // For Development
-            // devTools: false // For Production
+            // devTools: true // For Development
+            devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -57,7 +57,8 @@ function createWindow() {
             app.quit();
         }
         else if (data == "reload") {
-            app.relaunch();
+            const args = [];
+            app.relaunch({ args });
             app.quit();
         }
     });    
@@ -769,8 +770,8 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        const argv = process.argv.slice(2); // For development
-        // const argv = process.argv.slice(1); // For production
+        // const argv = process.argv.slice(2); // For development
+        const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
@@ -781,7 +782,7 @@ else {
             }
             else if (argv.indexOf("--reset") != -1) {
                 createResetWindow();
-                process.exit();
+                return;
             }
             else if (argv.indexOf("--help") != -1) {
                 process.exit();
@@ -899,8 +900,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
-            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
