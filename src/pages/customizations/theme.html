@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../../../assets/css/style.css">
     <title>Theme Panel</title>
 </head>
-<body class="bg-gray-100 select-none">
+<body class="bg-gray-50 select-none">
     <div class="container p-3">
         <div>
             <h2 class="text-xs my-1">Choose Your Theme</h2>
@@ -34,7 +34,7 @@
             if (i == activeThemeName) {
                 activeClass = "themeSelector-active"
             }
-            _id("themes").innerHTML += `<div class="themeSelector ${activeClass}" onclick="changeTheme(this.innerHTML)">${i}</div>`;
+            _id("themes").innerHTML += `<button class="themeSelector ${activeClass}" onclick="changeTheme(this.innerHTML)">${i}</button>`;
         }
         function changeThemeStatus(theme) {
             _elms(".themeSelector").forEach(element => {

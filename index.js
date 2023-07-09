@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            // devTools: true // For Development
-            devTools: false // For Production
+            devTools: true // For Development
+            // devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -520,8 +520,8 @@ let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
         try {
-            // tray = new Tray("assets/icons/notefinity.png"); // For development
-            let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
+            tray = new Tray("assets/icons/notefinity.png"); // For development
+            // let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
             tray = new Tray(trayIcon);
             tray.setTitle("NoteFinity");
             tray.setToolTip("Show NoteFinity");
@@ -770,8 +770,8 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        // const argv = process.argv.slice(2); // For development
-        const argv = process.argv.slice(1); // For production
+        const argv = process.argv.slice(2); // For development
+        // const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
@@ -849,6 +849,12 @@ app.on("second-instance", (event, commandLine, workingDirectory)=>{
     }
 })
 
+app.on("browser-window-blur", ()=>{
+    if (win) {
+        win.webContents.send("window-blurred", true);
+    }
+})
+
 process.on("uncaughtException", (error)=>{
     if (error.code == "ENOTFOUND") {
         win.webContents.send("show-alert", ["You are offline or the hostname could not be resolved.", "error"]);
@@ -900,8 +906,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
-            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
@@ -1112,3 +1118,4 @@ ipcMain.on("install-updates-quit", (event, data)=>{
         global.notefinityUpdater.quitAndInstall();
     }
 })
+

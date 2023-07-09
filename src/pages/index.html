@@ -124,7 +124,7 @@
             <button class="navlist-item">
                 <span>View</span>
                 <ul class="navlist-sublist w-40">
-                    <li style="display: flex; justify-content: space-between;" id="navWordWrap" onclick="toggleWordWrap(this)">Word Wrap <input type="checkbox" checked></li>
+                    <li style="display: flex; justify-content: space-between;" id="navWordWrap">Word Wrap <input type="checkbox"></li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
                     <li onclick="toggleFullScreenMode()">Toggle Full Screen Mode (F11)</li>
@@ -242,7 +242,7 @@
                 this.updateEditorElements();
                 this.aceEditors = [];
                 this.activatedEditor = 0;
-                this.wordWrap = true;
+                this.wordWrap = false;
                 this.autoSave = false;
                 this.untitledCount = 0;
                 this.readOnly = false;
@@ -343,6 +343,7 @@
                 refreshTheme();
                 this.aceEditors[index].focus();
                 document.querySelectorAll(".tabitem")[index].focus();
+
                 try {
                     let star = "";
                     if (_cls("tabitem-filename")[index].parentElement.getElementsByClassName("tabitem-star")[0].className.indexOf("hidden") == -1) {
@@ -351,6 +352,11 @@
                     _id("fileNoteFinityStatus").innerHTML = star + _cls("tabitem-filename")[index].innerHTML;
                 }
                 catch(err) {}
+
+                if (notefinity.autoSave) {
+                    saver.saveAll();
+                }
+
             }
             checkExistance(editor) {
                 let existance = this.aceEditors.indexOf(editor);
@@ -846,7 +852,6 @@
 
         class FileSaver {
             constructor() {
-                this.untitledSaveAllShow = false;
             }
             save(saveAs=false) {
                 let noteFinityIndex = notefinity.activatedEditor;
@@ -896,10 +901,6 @@
                         fileData.push(data);
                     }
                     else {
-                        if (!this.untitledSaveAllShow) {
-                            this.untitledSaveAllShow = true;
-                            alertModal("Please save all untitled files manually", "info");
-                        }
                     }
                 }
                 ipcRenderer.send("fileAction", {
@@ -952,7 +953,7 @@
                         fileSaveReflected(i);
                     }
                 }
-                _cls("tabitem")[notefinity.activatedEditor].click();
+                notefinity.aceEditors[notefinity.activatedEditor].focus();
 
                 if (data.saveFailed.length == 0) {
                     return;
@@ -1020,17 +1021,17 @@
             notefinity.add(data.contents, data.filepath, languageMode);
         }) 
 
-        function toggleWordWrap(elm) {
-            if (notefinity.wordWrap) {
-                notefinity.wordWrap = false;
-                elm.getElementsByTagName("input")[0].checked = false;
-            }
-            else {
-                elm.getElementsByTagName("input")[0].checked = true;
-                notefinity.wordWrap = true;
-            }
-            notefinity.updateEditorElements();
-        }
+        // function toggleWordWrap(elm) {
+        //     if (notefinity.wordWrap) {
+        //         notefinity.wordWrap = false;
+        //         elm.getElementsByTagName("input")[0].checked = false;
+        //     }
+        //     else {
+        //         elm.getElementsByTagName("input")[0].checked = true;
+        //         notefinity.wordWrap = true;
+        //     }
+        //     notefinity.updateEditorElements();
+        // }
         
         function fileChangeReflected(index) {
             _cls("tabitem-star")[index].classList.remove("hidden");
@@ -1908,7 +1909,7 @@
         let editorConf = localStorage.getItem("editor-conf");
         if (editorConf == null) {
             editorConf = {};
-            editorConf.wordwrap = true;
+            editorConf.wordWrap = true;
             editorConf.autoSave = false;
         }
         else {
@@ -1916,15 +1917,40 @@
         }
 
         if (editorConf.wordWrap == true) {
-            _id("navWordWrap").click();
-        }
-        if (editorConf.autoSave == true) {
-            _id("navAutoSave").click();
+            _id("navWordWrap").querySelector("input").checked = true;
+            notefinity.wordWrap = true;
+            notefinity.updateEditorElements();
         }
 
-        function toggleAutoSave(elm) {
-            
+        if (editorConf.autoSave == true) {
+            _id("navAutoSave").querySelector("input").checked = true;
+            notefinity.autoSave = true;
         }
+
+        function storeEditorConf() {
+            let data = {
+                wordWrap: notefinity.wordWrap,
+                autoSave: notefinity.autoSave
+            }
+            localStorage.setItem("editor-conf", JSON.stringify(data));
+        }
+
+        _id("navWordWrap").addEventListener("click", ()=>{
+            let checked = _id("navWordWrap").querySelector("input").checked;
+            _id("navWordWrap").querySelector("input").checked = !checked;
+            notefinity.wordWrap = !checked;
+            notefinity.updateEditorElements();
+            storeEditorConf();
+        })
+
+        _id("navAutoSave").addEventListener("click", ()=>{
+            let checked = _id("navAutoSave").querySelector("input").checked;
+            _id("navAutoSave").querySelector("input").checked = !checked;
+            notefinity.autoSave = !checked;
+            storeEditorConf();
+        })
+        
+
 
         window.addEventListener("contextmenu", (event)=>{
             event.preventDefault();
@@ -1964,6 +1990,12 @@
 
         ipcRenderer.on("backup-documents", (event, data)=>{
             backUpProcess();
+        })
+
+        ipcRenderer.on("window-blurred", (event, data)=>{
+            if (notefinity.autoSave) {
+                saver.saveAll();
+            }
         })
 
         

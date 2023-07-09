@@ -135,12 +135,6 @@ const themes = {
     navigationList: "bg-blue-600 text-gray-200 hover:text-white hover:bg-blue-700 active:text-white active:bg-blue-800",
     tabactive: "border-blue-800"
   },
-  "Moss":{
-    playground: "bg-green-100 text-gray-800",
-    navigation: "bg-transparent hover:bg-green-500 focus:bg-green-500",
-    navigationList: "bg-green-600 text-gray-200 hover:text-white hover:bg-green-700 active:text-white active:bg-green-800",
-    tabactive: "border-green-800"
-  },
   "Coral":{
     playground: "bg-red-100 text-gray-800",
     navigation: "bg-transparent hover:bg-red-500 focus:bg-red-500",
@@ -152,6 +146,12 @@ const themes = {
     navigation: "bg-transparent hover:bg-teal-500 focus:bg-teal-500",
     navigationList: "bg-teal-600 text-gray-200 hover:text-white hover:bg-teal-700 active:text-white active:bg-teal-800",
     tabactive: "border-teal-800"
+  },
+  "Snow White": {
+    "playground": "bg-white text-sky-400",
+    "navigation": "bg-transparent hover:bg-gray-100 focus:bg-gray-100",
+    "navigationList": "bg-gray-100 text-gray-900 hover:text-white hover:bg-gray-200 active:text-white active:bg-gray-300",
+    "tabactive": "border-gray-300"
   },
   "Neon Orange": {
     playground: "bg-black text-orange-500",
@@ -181,6 +181,27 @@ const themes = {
       "bg-black text-sky-500 hover:text-sky-500 hover:bg-sky-700 active:text-white active:bg-sky-900",
     tabactive: "border-sky-700"
   },
+  "Neon Green": {
+    playground: "bg-black text-green-500",
+    navigation: "bg-transparent hover:bg-green-700 focus:bg-green-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-green-500 hover:text-green-500 hover:bg-green-700 active:text-white active:bg-green-900",
+    tabactive: "border-green-700"
+  },
+  "Neon Indigo": {
+    playground: "bg-black text-indigo-500",
+    navigation: "bg-transparent hover:bg-indigo-700 focus:bg-indigo-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-indigo-500 hover:text-indigo-500 hover:bg-indigo-700 active:text-white active:bg-indigo-900",
+    tabactive: "border-indigo-700"
+  },
+  "Neon Purple": {
+    playground: "bg-black text-purple-500",
+    navigation: "bg-transparent hover:bg-purple-700 focus:bg-purple-700 text-white hover:text-white focus:text-white",
+    navigationList:
+      "bg-black text-purple-500 hover:text-purple-500 hover:bg-purple-700 active:text-white active:bg-purple-900",
+    tabactive: "border-purple-700"
+  },
   "Clear Sky": {
     playground: "bg-white text-black",
     navigation: "bg-transparent hover:bg-sky-100 focus:bg-sky-100 text-sky-800 hover:text-sky-800 focus:text-sky-800",
@@ -192,5 +213,11 @@ const themes = {
     navigation: "bg-transparent hover:bg-yellow-100 focus:bg-yellow-100 text-yellow-800 hover:text-yellow-800 focus:text-yellow-800",
     navigationList: "bg-yellow-200 text-yellow-800 hover:text-white hover:bg-yellow-300 active:text-white active:bg-yellow-400",
     tabactive: "border-yellow-400"
-  }
+  },
+  "Golden Glow": {
+    "playground": "bg-yellow-200 text-gray-800",
+    "navigation": "bg-transparent hover:bg-yellow-400 focus:bg-yellow-400",
+    "navigationList": "bg-yellow-500 text-gray-800 hover:text-white hover:bg-yellow-600 active:text-white active:bg-yellow-700",
+    "tabactive": "border-yellow-700"
+  },
 };
