@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            // devTools: true // For Development
-            devTools: false // For Production
+            devTools: true // For Development
+            // devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -769,8 +769,8 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        // const argv = process.argv.slice(2); // For development
-        const argv = process.argv.slice(1); // For production
+        const argv = process.argv.slice(2); // For development
+        // const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");

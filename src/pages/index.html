@@ -8,6 +8,7 @@
     <style>
         *::-webkit-scrollbar {
             width: 12px;
+            height: 12px;
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
@@ -117,6 +118,7 @@
                     <li onclick="convertCaseTo()">Convert Case to</li>
                     <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
                     <li onclick="deleteEmptyLines()">Delete Empty Lines</li>
+                    <li onclick="sanitizeHTML()">Sanitize HTML</li>
                     <hr>
                     <li style="display: flex; justify-content: space-between;" onclick="toggleReadOnly(this)">Read Only <input type="checkbox"></li>
                 </ul>
@@ -676,6 +678,9 @@
             _cls("navlist-item").forEach(element => {
                 element.className = rootClasses[".navlist-item"] + " " + themeData.navigation;
             });
+            _elms("hr").forEach(element=>{
+                element.className = themeData.line;
+            })
         }
         
         ipcRenderer.on("check-theme-check", (event, data)=>{
@@ -1151,6 +1156,28 @@
                 let contents = this.editor.getValue();
                 let nonEmptyValue = contents.replace(/^\s*[\r\n]/gm, "");
                 this.editor.setValue(nonEmptyValue);
+                this.focus();
+            }
+            sanitizeHTML() {
+                this.selectEditor();
+                let selection = this.getSelection();
+                let text = selection.text;
+                if (selection.text == "" || selection.text == null) {
+                    text = this.editor.getValue();
+                }
+                text = replaceAll(text, "<", "&lt;");
+                text = replaceAll(text, ">", "&gt;");
+                text = replaceAll(text, "\\\\", "&bsol;");
+                
+                if (selection.text == "" || selection.text == null) {
+                    this.editor.setValue("");
+                    this.editor.insert(text);
+                }
+                else {
+                    this.editor.session.replace(selection.range, text);
+                }
+                this.focus();
+                
             }
             convertCaseTo(caseName) {
                 this.selectEditor();
@@ -1159,7 +1186,7 @@
                     let replaceText = selection.text;
                     switch (caseName) {
                         case "uppercase":
-                            replaceText = selection.text.toUpperCase()
+                            replaceText = selection.text.toUpperCase();
                             break;
                         case "lowercase":
                             replaceText = selection.text.toLowerCase();
@@ -1312,6 +1339,15 @@
             }
             else {
                 editTab.deleteEmptyLines();
+            }
+        }
+
+        function sanitizeHTML() {
+            if (notefinity.readOnly) {
+                alertModal("To allow modifications, please disable read-only mode.", "error");
+            }
+            else {
+                editTab.sanitizeHTML();
             }
         }
 
