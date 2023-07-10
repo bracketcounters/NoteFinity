@@ -19,7 +19,7 @@ class Modal {
       transparent: !0,
       modal: this.isModal,
       icon: "assets/icons/notefinity.png",
-      webPreferences: { nodeIntegration: !0, contextIsolation: !1 },
+      webPreferences: { nodeIntegration: !0, contextIsolation: !1, devTools: !1 },
     })).loadFile(this.htmlfile);
   }
   close() {

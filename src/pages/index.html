@@ -143,7 +143,7 @@
                     <li onclick="openModal('texttospeech')">Text to Speech</li>
                     <li onclick="previewMarkdown()">Preview Markdown</li>
                     <hr>
-                    <li style="display: flex; justify-content: space-between;" id="navAutoSave" onclick="toggleAutoSave(this)">Auto Save <input type="checkbox"></li>
+                    <li style="display: flex; justify-content: space-between;" id="navAutoSave">Auto Save <input type="checkbox"></li>
                 </ul>
             </button>
             <button class="navlist-item">
@@ -707,6 +707,7 @@
             })
 
             if (textBoxThemeImage != false) {
+                textBoxThemeImage = replaceAll(textBoxThemeImage, "\\\\", "/");
                 if (textBoxGrid) {
                     _id("configurableStyle").innerHTML = `.editor {
                         background: url(../../assets/images/background-grid.png), url(${textBoxThemeImage});
@@ -950,9 +951,10 @@
                 for (let i=0; i<notefinity.editorElements.length; i++) {
                     let element = notefinity.editorElements[i];
                     if (data.saveDone.indexOf(element.getAttribute("data-filepath")) != -1) {
-                        fileSaveReflected(i);
+                        fileSaveReflectedOnTab(i);
                     }
                 }
+                fileSaveReflected(notefinity.activatedEditor);
                 notefinity.aceEditors[notefinity.activatedEditor].focus();
 
                 if (data.saveFailed.length == 0) {
@@ -1046,6 +1048,13 @@
             _cls("tabitem-star")[index].classList.add("hidden");
             try {
                 _id("fileNoteFinityStatus").innerHTML = _cls("tabitem-filename")[index].innerHTML;
+                notefinity.editorElements[index].setAttribute("data-changed", false);
+            }
+            catch(err) {}
+        }
+        function fileSaveReflectedOnTab(index) {
+            _cls("tabitem-star")[index].classList.add("hidden");
+            try {
                 notefinity.editorElements[index].setAttribute("data-changed", false);
             }
             catch(err) {}
@@ -1997,8 +2006,6 @@
                 saver.saveAll();
             }
         })
-
-        
     </script>
 </body>
 </html>

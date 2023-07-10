@@ -208,3 +208,7 @@ class ProgressView {
                 }
             }
         }
+
+function replaceAll(text, replaceable, replaceText) {
+    return text.replace(new RegExp(replaceable, 'g'), replaceText);
+}

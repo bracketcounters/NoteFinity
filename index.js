@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            devTools: true // For Development
-            // devTools: false // For Production
+            // devTools: true // For Development
+            devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -520,8 +520,8 @@ let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
         try {
-            tray = new Tray("assets/icons/notefinity.png"); // For development
-            // let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
+            // tray = new Tray("assets/icons/notefinity.png"); // For development
+            let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
             tray = new Tray(trayIcon);
             tray.setTitle("NoteFinity");
             tray.setToolTip("Show NoteFinity");
@@ -569,7 +569,6 @@ ipcMain.on("reset-notefinity", (event, data)=>{
             })
         }
         catch(err) {
-            console.log(err);
         }
     }
 })
@@ -770,8 +769,8 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        const argv = process.argv.slice(2); // For development
-        // const argv = process.argv.slice(1); // For production
+        // const argv = process.argv.slice(2); // For development
+        const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
@@ -906,8 +905,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
-            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
@@ -936,7 +935,7 @@ class Updater {
                                     modal.send("update-downloaded-percentage", percent);
                                 })
                             }
-                            catch(err) {console.log(err);}
+                            catch(err) {}
                         }
                     }
                 });
@@ -986,11 +985,9 @@ class Updater {
     }
     createBatchFile() {
         try {
-            let updatesFile = new DataStorage("updates", "updates.tmp").getPath();
-            if (fs.statSync(updatesFile).size == 0) {
-                return false;
-            }
-            let currentDirectory = __dirname;
+            let updatesFile = new DataStorage("updates", "app.asar").getPath();
+
+            let currentDirectory = path.dirname(__dirname);
             let batchFile = new DataStorage("update_additional", "updates_installer.bat");
             let batchFileCode = `@echo off
 set "sourceFile=${updatesFile.toString()}"
@@ -1001,9 +998,10 @@ echo false
 pause
 exit /b
 )
+timeout /t 2 /nobreak >nul
 echo Moving file...
 move /Y "%sourceFile%" "%destinationFolder%"
-ping 127.0.0.1 -n 3 > nul
+timeout /t 2 /nobreak >nul
 start "" "${app.getPath('exe').toString()}"
 echo true
 del "%~f0"

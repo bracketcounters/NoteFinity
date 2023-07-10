@@ -118,7 +118,7 @@
         })
 
         ipcRenderer.on("back-refresh-textbox-images", (event, data)=>{
-
+            console.log(data);
             data.unshift("../../../assets/images/background-gradient.png", "../../../assets/images/pink-blue-gradient.png", "../../../assets/images/blue-violet-gradient.png", "../../../assets/images/white-orange-gradient.png", "../../../assets/images/blue-chamomile.jpg", "../../../assets/images/magical-place.jpg", "../../../assets/images/yellow_flower.jpg", "../../../assets/images/pencils.jpg");
 
 
@@ -131,12 +131,23 @@
                 _id("textboxThemeBGImageSelectorParent").innerHTML += `<div class="relative w-20 h-16 rounded overflow-hidden mr-2 mb-2 textboxThemeBGImageSelector">
                     <img src="${element}" class="w-full h-full object-cover textboxThemeBGImage" draggable="false" alt="">
                     <div class="absolute w-full h-full inset-0 bg-[#1f293780] hidden flex-col justify-center items-center textboxThemeBGImageSelectorButtons">
-                        <button class="px-2 py-1 w-16 text-white text-xs outline-none rounded bg-green-600 mb-1" onclick="applyTextBoxImage(this.parentNode.parentNode.getElementsByClassName('textboxThemeBGImage')[0].src)">Apply</button>
+                        <button class="px-2 py-1 w-16 text-white text-xs outline-none rounded bg-green-600 mb-1" onclick="applyTextBoxImage(getImageSrc(this.parentNode.parentNode.getElementsByClassName('textboxThemeBGImage')[0].getAttribute('src')))">Apply</button>
                         <button class="px-2 py-1 w-16 text-white text-xs outline-none rounded bg-red-600 ${deleteButtonExtraClass}" onclick="deleteTextBoxImage(this.parentNode.parentNode.getElementsByClassName('textboxThemeBGImage')[0].src)">Delete</button>
                     </div>
                 </div>`;
             });
         })
+
+        
+
+        function getImageSrc(src) {
+            if (src.startsWith("../")) {
+                return src.substr(3);
+            }
+            else {
+                return src;
+            }
+        }
 
         function applyTextBoxImage(imageFile) {
             if (_id("themeSelector").value !== "chrome") {
