@@ -918,10 +918,6 @@
         }
 
         ipcRenderer.on("saveAlert", (event, data)=>{
-            // if (data.success == false) {
-            //     alertModal("Unable to save the file at this location. Please select a different name or directory.", "error");
-            //     return;
-            // }
             if (data.action == "untitledsave") {
                 if (data.success == "true" || data.success == true) {
                     notefinity.editorElements[data.index].setAttribute("data-filepath", data.filepath);
@@ -959,7 +955,9 @@
                         fileSaveReflectedOnTab(i);
                     }
                 }
-                fileSaveReflected(notefinity.activatedEditor);
+                if (data.saveDone.indexOf(notefinity.editorElements[notefinity.activatedEditor].getAttribute("data-filepath")) != -1) {
+                    fileSaveReflected(notefinity.activatedEditor);
+                }
                 notefinity.aceEditors[notefinity.activatedEditor].focus();
 
                 if (data.saveFailed.length == 0) {
@@ -974,7 +972,9 @@
                         let lastElement = data.saveFailed.pop();
                         result = data.saveFailed.join(", ") + " and " + lastElement;
                     }
-                    alertModal(`Unable to save ${result}`, "error");
+                    if (!notefinity.autoSave) {
+                        alertModal(`Unable to save ${result}`, "error");
+                    }
                 }
                 
             }
@@ -1146,7 +1146,12 @@
             removeUnnecessarySpaces() {
                 this.selectEditor();
                 let selection = this.getSelection();
-                if (this.checkTextSelection(selection.text)) {
+                if (selection.text == "" || selection.text == null) {
+                    let replaceText = this.editor.getValue().replace(/\s+/g, " ").trim();
+                    this.editor.setValue("");
+                    this.editor.insert(replaceText);
+                }
+                else {
                     let replaceText = selection.text.replace(/\s+/g, " ").trim();
                     this.editor.session.replace(selection.range, replaceText);
                 }

@@ -34,8 +34,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            devTools: true // For Development
-            // devTools: false // For Production
+            // devTools: true // For Development
+            devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -769,21 +769,29 @@ if (!gotTheLock) {
 }
 else {
     app.on("ready", ()=>{
-        const argv = process.argv.slice(2); // For development
-        // const argv = process.argv.slice(1); // For production
+        createWindow();
+        // const argv = process.argv.slice(2); // For development
+        const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
             }
             else if (argv.indexOf("--version") != -1) {
+                if (win) {
+                    win.close();
+                }
                 console.log("1.0.0");
                 process.exit();
             }
             else if (argv.indexOf("--reset") != -1) {
+                if (win) {
+                    win.close();
+                }
                 createResetWindow();
                 return;
             }
             else if (argv.indexOf("--help") != -1) {
+                console.log("Something help");
                 process.exit();
             }
             
@@ -791,37 +799,19 @@ else {
                 if (argv.length == 1) {
                     try {
                         let fileLocation = path.resolve(argv[0]);
-                        setTimeout(() => {
-                            if (win) {
-                                win.webContents.send("back-openFile", fileLocation);
-                            }
-                            else {
+                        if (win) {
+                            win.webContents.on("did-finish-load", ()=>{
                                 setTimeout(() => {
-                                    if (win) {
-                                        win.webContents.send("back-openFile", fileLocation);
-                                    }
-                                    else {
-                                        setTimeout(() => {
-                                            if (win) {
-                                                win.webContents.send("back-openFile", fileLocation);
-                                            }
-                                            else {
-                                                if (win) {
-                                                    win.webContents.send("back-openFile", fileLocation);
-                                                }
-                                            }
-                                        }, 1000);
-                                    }
-                                }, 1000);
-                            }
-                        }, 600);
+                                    win.webContents.send("back-openFile", fileLocation);
+                                }, 400);
+                            })
+                        }
                     }
                     catch(err) {
                     }
                 }
             }
     }
-    createWindow();
 })
 }
 
