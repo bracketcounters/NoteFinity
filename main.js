@@ -784,11 +784,7 @@ else {
                 process.exit();
             }
             else if (argv.indexOf("--reset") != -1) {
-                if (win) {
-                    win.close();
-                }
                 createResetWindow();
-                return;
             }
             else if (argv.indexOf("--help") != -1) {
                 console.log("Something help");

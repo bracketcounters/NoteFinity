@@ -2,14 +2,14 @@
   "name": "notefinity",
   "version": "1.0.0",
   "description": "NoteFinity is a versatile text editor that provides a feature-rich environment for creating and editing documents. With its intuitive interface, advanced text editing capabilities, and support for multiple file formats, NoteFinity empowers users to efficiently write and manage their content.",
-  "main": "index.js",
-  "updateUrl": "https://dl-1.bracketcounters.com/notefinity/updates/latest.json",
+  "main": "main.js",
+  "updateUrl": "https://dl-1.bracketcounters.com/notefinity/windows/updates/latest.json",
   "scripts": {
     "start": "tailwindcss -i src/style.css -o assets/css/style.css & electron .",
     "go": "electron .",
     "watch": "nodemon --ext js,css,html --exec npm run start",
     "dev": "nodemon --ext js,css,html --exec electron .",
-    "win.pack": "electron-packager ./ NoteFinity --platform=win32 --icon=assets/icons/notefinity.ico --asar --arch=x64 --overwrite --ignore=temp --win32metadata.CompanyName=\"BracketCounters\" --win32metadata.ProductName=\"NoteFinity\" --win32metadata.FileVersion=\"6.0.0.0\" --app-version=\"6.0.0\" --win32metadata.ProductName=\"NoteFinity\" --win32metadata.FileDescription=\"NoteFinity\"",
+    "win.pack": "electron-packager ./ NoteFinity --platform=win32 --icon=temp/notefinity-logo.ico --asar --arch=ia32 --overwrite --ignore=temp --win32metadata.CompanyName=\"BracketCounters\" --win32metadata.ProductName=\"NoteFinity\" --win32metadata.FileVersion=\"6.0.0.0\" --app-version=\"6.0.0\" --win32metadata.ProductName=\"NoteFinity\" --win32metadata.FileDescription=\"NoteFinity\" --win32metadata.Copyright=\"BracketCounters\"",
     "linux.pack": "electron-packager ./ NoteFinity --ignore=temp --asar --overwrite --app-version=\"6.0.0\" --arch=x64 --platform=linux",
     "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
   },
