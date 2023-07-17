@@ -1,13 +1,13 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray } = require("electron");
 const windowStateKeeper = require("electron-window-state")
-const { DataStorage, FileStorage } = require("./src/storage");
-const { Modal } = require("./src/modal");
-const { Minifier } = require("./src/minifier");
+const { DataStorage, FileStorage } = require("./storage");
+const { Modal } = require("./modal");
+const { Minifier } = require("./minifier");
 const fs = require("fs");
 const { exec } = require("child_process");
 const path = require("path");
 const say = require("say");
-const { TextToSpeech } = require("./src/texttospeech");
+const { TextToSpeech } = require("./texttospeech");
 const open = require("open");
 const http = require("http");
 const https = require("https");
@@ -31,6 +31,7 @@ function createWindow() {
         frame: false,
         minWidth: 312,
         minHeight: 120,
+        roundedCorners: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,

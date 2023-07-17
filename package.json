@@ -2,7 +2,7 @@
   "name": "notefinity",
   "version": "1.0.0",
   "description": "NoteFinity is a versatile text editor that provides a feature-rich environment for creating and editing documents. With its intuitive interface, advanced text editing capabilities, and support for multiple file formats, NoteFinity empowers users to efficiently write and manage their content.",
-  "main": "main.js",
+  "main": "src/main.js",
   "updateUrl": "https://dl-1.bracketcounters.com/notefinity/windows/updates/latest.json",
   "scripts": {
     "start": "tailwindcss -i src/style.css -o assets/css/style.css & electron .",

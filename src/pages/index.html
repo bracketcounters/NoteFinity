@@ -65,137 +65,138 @@
             animation: none;
             z-index: 1000;
         }
-
     </style>
     <style id="configurableStyle"></style>
     <style id="configurableFont"></style>
     <title>NoteFinity</title>
 </head>
 <body class="rounded-md select-none">
-    <header class="w-full flex flex-col fixed left-0 top-0 z-[1000]">
-        <div class="flex justify-between items-center w-full h-8 px-2" id="headerPane" style="-webkit-app-region: drag;">
+    <main>
+        <header class="w-full flex flex-col fixed left-0 top-0 z-[1000]">
+            <div class="flex justify-between items-center w-full h-8 px-2" id="headerPane" style="-webkit-app-region: drag;">
 
+            </div>
+            <ul class="w-full h-6 flex items-center justify-start" id="headerNavigation">
+                <button class="navlist-item">
+                    <span>File</span>
+                    <ul class="navlist-sublist w-40 ml-1">
+                        <li onclick="tabNewFile()">New (Ctrl+N)</li>
+                        <li onclick="fileAction('openfile')">Open (Ctrl+O)</li>
+                        <li onclick="openFolder()">Open Folder</li>
+                        <li onclick="openModal('openrecent')">Open Recent Files</li>
+                        <li onclick="fileAction('savefile')">Save (Ctrl+S)</li>
+                        <li onclick="fileAction('saveas')">Save as (Ctrl+Shift+S)</li>
+                        <li onclick="fileAction('savecopyas')">Save a Copy As</li>
+                        <li onclick="fileAction('saveall')">Save All</li>
+                        <hr>
+                        <li onclick="renameFile()">Rename</li>
+                        <hr>
+                        <li onclick="tabitemClose(notefinity.activatedEditor);">Close (Ctrl+W)</li>
+                        <li onclick="closeAllFiles()">Close All</li>
+                        <li onclick="closeAllButActiveDocument()">Close All but Active Document</li>
+                        <li onclick="closeToTheLeft()">Close All to the left</li>
+                        <li onclick="closeToTheRight()">Close All to the right</li>
+                        <hr>
+                        <li onclick="appAction('exit')">Exit</li>
+                    </ul>
+                </button>
+                <button class="navlist-item">
+                    <span>Edit</span>
+                    <ul class="navlist-sublist w-40">
+                        <li onclick="editTab.undo()">Undo (Ctrl+Z)</li>
+                        <li onclick="editTab.redo()">Redo (Ctrl+Y)</li>
+                        <hr>
+                        <li onclick="reloadFileContents()">Reload (Ctrl+R)</li>
+                        <hr>
+                        <li onclick="editTab.openFindPanel();">Find (Ctrl+F)</li>
+                        <li onclick="editTab.openFindReplacePanel();">Replace (Ctrl+H)</li>
+                        <hr>
+                        <li onclick="openModal('copytoclipboard')">Copy to Clipboard</li>
+                        <hr>
+                        <li onclick="insertDate()">Time/Date (F5)</li>
+                        <hr>
+                        <li onclick="convertCaseTo()">Convert Case to</li>
+                        <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
+                        <li onclick="deleteEmptyLines()">Delete Empty Lines</li>
+                        <li onclick="sanitizeHTML()">Sanitize HTML</li>
+                        <hr>
+                        <li style="display: flex; justify-content: space-between;" onclick="toggleReadOnly(this)">Read Only <input type="checkbox"></li>
+                    </ul>
+                </button>
+                <button class="navlist-item">
+                    <span>View</span>
+                    <ul class="navlist-sublist w-40">
+                        <li style="display: flex; justify-content: space-between;" id="navWordWrap">Word Wrap <input type="checkbox"></li>
+                        <hr>
+                        <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
+                        <li onclick="toggleFullScreenMode()">Toggle Full Screen Mode (F11)</li>
+                        <li onclick="temporarilyHide()">Temporarily Hide</li>
+                        <hr>
+                        <li onclick="openModal('chooselanguage')">Syntax Highlighting</li>
+                        <hr>
+                        <li onclick="viewInApplication()">View File in Application</li>
+                    </ul>
+                </button>
+                <button class="navlist-item">
+                    <span>Options</span>
+                    <ul class="navlist-sublist w-[9rem]">
+                        <li onclick="fetchFromInternet()">Fetch From Internet</li>
+                        <li onclick="openModal('minifier')">Code Minifier</li>
+                        <li onclick="openModal('texttospeech')">Text to Speech</li>
+                        <li onclick="previewMarkdown()">Preview Markdown</li>
+                        <hr>
+                        <li style="display: flex; justify-content: space-between;" id="navAutoSave">Auto Save <input type="checkbox"></li>
+                    </ul>
+                </button>
+                <button class="navlist-item">
+                    <span>Customization</span>
+                    <ul class="navlist-sublist w-32">
+                        <li onclick="openModal('frame')">Frame</li>
+                        <li onclick="openModal('theme')">Theme</li>
+                        <li onclick="openModal('textbox')">Textbox</li>
+                        <li onclick="openModal('fonts')">Fonts</li>
+                    </ul>
+                </button>
+                <button class="navlist-item">
+                    <span>Help</span>
+                    <ul class="navlist-sublist w-36">
+                        <li onclick="openAboutNoteFinity()">About NoteFinity</li>
+                        <li>Report a Bug</li>
+                        <hr>
+                        <li onclick="checkForUpdates()" id="checkForUpdates">Check For Updates</li>
+                        <hr>
+                        <li onclick="reloadNoteFinity()">Reload</li>
+                        <li onclick="resetNoteFinity()">Reset</li>
+                    </ul>
+                </button>
+            </ul>
+        </header>
+        <div id="editorList">
+            <!-- <div class="editor absolute w-full top-14 bottom-7 left-0 right-0 outline-0"></div> -->
         </div>
-        <ul class="w-full h-6 flex items-center justify-start" id="headerNavigation">
-            <button class="navlist-item">
-                <span>File</span>
-                <ul class="navlist-sublist w-40 ml-1">
-                    <li onclick="tabNewFile()">New (Ctrl+N)</li>
-                    <li onclick="fileAction('openfile')">Open (Ctrl+O)</li>
-                    <li onclick="openFolder()">Open Folder</li>
-                    <li onclick="openModal('openrecent')">Open Recent Files</li>
-                    <li onclick="fileAction('savefile')">Save (Ctrl+S)</li>
-                    <li onclick="fileAction('saveas')">Save as (Ctrl+Shift+S)</li>
-                    <li onclick="fileAction('savecopyas')">Save a Copy As</li>
-                    <li onclick="fileAction('saveall')">Save All</li>
-                    <hr>
-                    <li onclick="renameFile()">Rename</li>
-                    <hr>
-                    <li onclick="tabitemClose(notefinity.activatedEditor);">Close (Ctrl+W)</li>
-                    <li onclick="closeAllFiles()">Close All</li>
-                    <li onclick="closeAllButActiveDocument()">Close All but Active Document</li>
-                    <li onclick="closeToTheLeft()">Close All to the left</li>
-                    <li onclick="closeToTheRight()">Close All to the right</li>
-                    <hr>
-                    <li onclick="appAction('exit')">Exit</li>
-                </ul>
-            </button>
-            <button class="navlist-item">
-                <span>Edit</span>
-                <ul class="navlist-sublist w-40">
-                    <li onclick="editTab.undo()">Undo (Ctrl+Z)</li>
-                    <li onclick="editTab.redo()">Redo (Ctrl+Y)</li>
-                    <hr>
-                    <li onclick="reloadFileContents()">Reload (Ctrl+R)</li>
-                    <hr>
-                    <li onclick="editTab.openFindPanel();">Find (Ctrl+F)</li>
-                    <li onclick="editTab.openFindReplacePanel();">Replace (Ctrl+H)</li>
-                    <hr>
-                    <li onclick="openModal('copytoclipboard')">Copy to Clipboard</li>
-                    <hr>
-                    <li onclick="insertDate()">Time/Date (F5)</li>
-                    <hr>
-                    <li onclick="convertCaseTo()">Convert Case to</li>
-                    <li onclick="removeUnnecessarySpaces()">Remove Unnecessary Spaces</li>
-                    <li onclick="deleteEmptyLines()">Delete Empty Lines</li>
-                    <li onclick="sanitizeHTML()">Sanitize HTML</li>
-                    <hr>
-                    <li style="display: flex; justify-content: space-between;" onclick="toggleReadOnly(this)">Read Only <input type="checkbox"></li>
-                </ul>
-            </button>
-            <button class="navlist-item">
-                <span>View</span>
-                <ul class="navlist-sublist w-40">
-                    <li style="display: flex; justify-content: space-between;" id="navWordWrap">Word Wrap <input type="checkbox"></li>
-                    <hr>
-                    <li style="display: flex; justify-content: space-between;" onclick="viewAlwaysOnTop(this)">Always on Top <input type="checkbox"></li>
-                    <li onclick="toggleFullScreenMode()">Toggle Full Screen Mode (F11)</li>
-                    <li onclick="temporarilyHide()">Temporarily Hide</li>
-                    <hr>
-                    <li onclick="openModal('chooselanguage')">Syntax Highlighting</li>
-                    <hr>
-                    <li onclick="viewInApplication()">View File in Application</li>
-                </ul>
-            </button>
-            <button class="navlist-item">
-                <span>Options</span>
-                <ul class="navlist-sublist w-[9rem]">
-                    <li onclick="fetchFromInternet()">Fetch From Internet</li>
-                    <li onclick="openModal('minifier')">Code Minifier</li>
-                    <li onclick="openModal('texttospeech')">Text to Speech</li>
-                    <li onclick="previewMarkdown()">Preview Markdown</li>
-                    <hr>
-                    <li style="display: flex; justify-content: space-between;" id="navAutoSave">Auto Save <input type="checkbox"></li>
-                </ul>
-            </button>
-            <button class="navlist-item">
-                <span>Customization</span>
-                <ul class="navlist-sublist w-32">
-                    <li onclick="openModal('frame')">Frame</li>
-                    <li onclick="openModal('theme')">Theme</li>
-                    <li onclick="openModal('textbox')">Textbox</li>
-                    <li onclick="openModal('fonts')">Fonts</li>
-                </ul>
-            </button>
-            <button class="navlist-item">
-                <span>Help</span>
-                <ul class="navlist-sublist w-36">
-                    <li onclick="openAboutNoteFinity()">About NoteFinity</li>
-                    <li>Report a Bug</li>
-                    <hr>
-                    <li onclick="checkForUpdates()" id="checkForUpdates">Check For Updates</li>
-                    <hr>
-                    <li onclick="reloadNoteFinity()">Reload</li>
-                    <li onclick="resetNoteFinity()">Reset</li>
-                </ul>
-            </button>
+        <div class="w-full h-7 flex items-start justify-start fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll" id="tabscroll">
+            <!-- <div class="tabitem tabitem-active">Untitled <span class="tabitem-close">&times;</span></div> -->
+        </div>
+
+        <ul class="absolute w-32 select-none overflow-auto rounded-md shadow-lg hidden navlist-sublist transition-none contextMenu" id="contextMenu">
+            <li onclick="editTab.undo()">Undo</li>
+            <li onclick="editTab.redo()">Redo</li>
+            <hr>
+            <li onclick="editTab.cut()">Cut</li>
+            <li onclick="editTab.copy()">Copy</li>
+            <li onclick="editTab.paste()">Paste</li>
+            <li onclick="editTab.delete()">Delete</li>
+            <hr>
+            <li onclick="editTab.selectAll()">Select All</li>
+            <hr>
+            <li onclick="convertCaseTo(true)">Convert Case to</li>
+            <hr>
+            <li onclick="editTab.webSearch()">Web Search</li>
+            <li onclick="editTab.openURL()">Open URL</li>
         </ul>
-    </header>
-    <div id="editorList">
-        <!-- <div class="editor absolute w-full top-14 bottom-7 left-0 right-0 outline-0"></div> -->
-    </div>
-    <div class="w-full h-7 flex items-start justify-start fixed bottom-0 px-1 overflow-hidden whitespace-nowrap overflow-x-auto tabscroll" id="tabscroll">
-        <!-- <div class="tabitem tabitem-active">Untitled <span class="tabitem-close">&times;</span></div> -->
-    </div>
-
-    <ul class="absolute w-32 select-none overflow-auto rounded-md shadow-lg hidden navlist-sublist transition-none contextMenu" id="contextMenu">
-        <li onclick="editTab.undo()">Undo</li>
-        <li onclick="editTab.redo()">Redo</li>
-        <hr>
-        <li onclick="editTab.cut()">Cut</li>
-        <li onclick="editTab.copy()">Copy</li>
-        <li onclick="editTab.paste()">Paste</li>
-        <li onclick="editTab.delete()">Delete</li>
-        <hr>
-        <li onclick="editTab.selectAll()">Select All</li>
-        <hr>
-        <li onclick="convertCaseTo(true)">Convert Case to</li>
-        <hr>
-        <li onclick="editTab.webSearch()">Web Search</li>
-        <li onclick="editTab.openURL()">Open URL</li>
-      </ul>
 
 
+    </main>
     <script src="../../assets/js/idb.min.js"></script>
     <script src="../../assets/js/ace.js"></script>
     <script src="../../assets/js/compulsory.js"></script>
@@ -2044,5 +2045,6 @@
             }
         })
     </script>
+
 </body>
 </html>
