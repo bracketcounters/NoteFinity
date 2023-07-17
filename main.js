@@ -54,7 +54,12 @@ function createWindow() {
             win.minimize();
         }
         else if (data == "exit") {
-            app.quit();
+            if (win) {
+                win.hide();
+            }
+            setTimeout(() => {
+                app.quit();
+            }, 1200);
         }
         else if (data == "reload") {
             const args = [];
@@ -823,14 +828,18 @@ app.on("second-instance", (event, commandLine, workingDirectory)=>{
             }
         }
         win.focus();
-        setTimeout(() => {
-            win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
-        }, 520);
+        if (commandLine.length == 4) {
+            setTimeout(() => {
+                win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
+            }, 520);
+        }
     }
     else {
-        setTimeout(() => {
-            win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
-        }, 1500);
+        if (commandLine.length == 4) {
+            setTimeout(() => {
+                win.webContents.send("back-openFile", commandLine[commandLine.length-1]);
+            }, 1500);
+        }
     }
 })
 
@@ -858,27 +867,6 @@ function checkArrayEquality(array1, array2) {
     }
   }
   return true;
-}
-
-function copyExecutables() {
-    const utilityLocal = path.resolve("utility");
-    const utilityStorage = new DataStorage("utility", "").getPath();
-
-    let utilityLocalFiles = fs.readdirSync(utilityLocal);
-    let utilityStorageFiles = fs.readdirSync(utilityStorage);
-
-    return new Promise((resolve, reject)=>{
-        if (checkArrayEquality(utilityLocalFiles, utilityStorageFiles)) {
-            resolve(true);
-        }
-        else {
-            utilityLocalFiles.forEach(file => {
-                let filePath = path.join(utilityLocal, file);
-                fs.copyFileSync(filePath, path.join(utilityStorage, file));
-            });
-            resolve(true);
-        }
-    })
 }
 
 class Updater {

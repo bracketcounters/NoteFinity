@@ -462,11 +462,7 @@
                         }
                     }
                 }).then(result=>{
-                    progressView.modal("Quiting...");
-                    setTimeout(() => {
-                        ipcRenderer.send("appAction", action);
-                    }, 800);
-                    
+                    ipcRenderer.send("appAction", action);
                 })
             }
             else {
