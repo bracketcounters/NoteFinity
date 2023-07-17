@@ -14,7 +14,10 @@
     "updatecss": "tailwindcss -i src/style.css -o assets/style.css"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "BracketCounters",
+    "email": "info@bracketcounters.com"
+  },
   "license": "MIT",
   "dependencies": {
     "adm-zip": "^0.5.10",
