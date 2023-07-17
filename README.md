@@ -2,6 +2,8 @@
 
 NoteFinity is a feature-rich and enhanced version of the classic Notepad application developed by BracketCounters. If you find yourself growing tired of the limitations of the traditional Notepad, NoteFinity is the perfect alternative. Packed with a wide range of functionalities, NoteFinity aims to enhance your text editing experience and boost productivity.
 
+![App Screenshot](https://assets-sy1.bracketcounters.com/img/e03d75c5e9ac06.png)
+
 ## Features
 
 - **Multiple Tabs:** Say goodbye to managing multiple instances of Notepad. NoteFinity allows you to work with multiple tabs, enabling you to switch effortlessly between different documents and work on them simultaneously.
