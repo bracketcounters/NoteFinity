@@ -58,9 +58,10 @@ function createWindow() {
             if (win) {
                 win.hide();
             }
-            setTimeout(() => {
-                app.quit();
-            }, 1200);
+            app.quit(); // For Development
+            // setTimeout(() => { // For Production
+                // app.quit();
+            // }, 1200);
         }
         else if (data == "reload") {
             const args = [];
