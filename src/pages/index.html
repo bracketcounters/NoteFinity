@@ -144,8 +144,6 @@
                         <li onclick="openModal('minifier')">Code Minifier</li>
                         <li onclick="openModal('texttospeech')">Text to Speech</li>
                         <li onclick="previewMarkdown()">Preview Markdown</li>
-                        <hr>
-                        <li style="display: flex; justify-content: space-between;" id="navAutoSave">Auto Save <input type="checkbox"></li>
                     </ul>
                 </button>
                 <button class="navlist-item">
@@ -161,7 +159,7 @@
                     <span>Help</span>
                     <ul class="navlist-sublist w-36">
                         <li onclick="openAboutNoteFinity()">About NoteFinity</li>
-                        <li>Report a Bug</li>
+                        <li onclick="openReportBugs()">Report a Bug</li>
                         <hr>
                         <li onclick="checkForUpdates()" id="checkForUpdates">Check For Updates</li>
                         <hr>
@@ -355,10 +353,6 @@
                     _id("fileNoteFinityStatus").innerHTML = star + _cls("tabitem-filename")[index].innerHTML;
                 }
                 catch(err) {}
-
-                if (notefinity.autoSave) {
-                    saver.saveAll();
-                }
 
             }
             checkExistance(editor) {
@@ -1490,7 +1484,11 @@
         }
 
         function openAboutNoteFinity() {
-            ipcRenderer.send("open-in-application", "https://www.bracketcounters.com");
+            ipcRenderer.send("open-in-application", "https://www.bracketcounters.com/notefinity");
+        }
+
+        function openReportBugs() {
+            ipcRenderer.send("open-in-application", "https://www.bracketcounters.com/notefinity/report-bugs");
         }
 
         function renameFile() {
@@ -1957,7 +1955,6 @@
         if (editorConf == null) {
             editorConf = {};
             editorConf.wordWrap = true;
-            editorConf.autoSave = false;
         }
         else {
             editorConf = JSON.parse(editorConf);
@@ -1967,11 +1964,6 @@
             _id("navWordWrap").querySelector("input").checked = true;
             notefinity.wordWrap = true;
             notefinity.updateEditorElements();
-        }
-
-        if (editorConf.autoSave == true) {
-            _id("navAutoSave").querySelector("input").checked = true;
-            notefinity.autoSave = true;
         }
 
         function storeEditorConf() {
@@ -1988,15 +1980,7 @@
             notefinity.wordWrap = !checked;
             notefinity.updateEditorElements();
             storeEditorConf();
-        })
-
-        _id("navAutoSave").addEventListener("click", ()=>{
-            let checked = _id("navAutoSave").querySelector("input").checked;
-            _id("navAutoSave").querySelector("input").checked = !checked;
-            notefinity.autoSave = !checked;
-            storeEditorConf();
-        })
-        
+        })        
 
 
         window.addEventListener("contextmenu", (event)=>{
@@ -2037,12 +2021,6 @@
 
         ipcRenderer.on("backup-documents", (event, data)=>{
             backUpProcess();
-        })
-
-        ipcRenderer.on("window-blurred", (event, data)=>{
-            if (notefinity.autoSave) {
-                saver.saveAll();
-            }
         })
     </script>
 

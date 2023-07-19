@@ -27,7 +27,7 @@ function createWindow() {
         x: windowState.x,
         y: windowState.y,
         autoHideMenuBar: true,
-        icon: "assets/icons/notefinity.png",
+        icon: "assets/icons/notefinity.ico",
         frame: false,
         minWidth: 312,
         minHeight: 120,
@@ -35,8 +35,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            // devTools: true // For Development
-            devTools: false // For Production
+            devTools: true // For Development
+            // devTools: false // For Production
         }
     })
     win.loadFile("src/pages/index.html");
@@ -60,7 +60,7 @@ function createWindow() {
             }
             app.quit(); // For Development
             // setTimeout(() => { // For Production
-                // app.quit();
+            //     app.quit();
             // }, 1200);
         }
         else if (data == "reload") {
@@ -317,7 +317,7 @@ ipcMain.on("fileAction", (event, data)=>{
                     ]
                 }).then(result=>{
                     if (!result.canceled) {
-                        fs.writeFile(result.filePath, data.contents, (err)=>{
+                        fs.writeFile(result.filePath, data.contents, {encoding: "utf8"}, (err)=>{
                             if (err) {
                                 let returnData = {
                                     action: "untitledsave",
@@ -341,7 +341,7 @@ ipcMain.on("fileAction", (event, data)=>{
                 })
             }
             else if (data.type == "manual") {
-                fs.writeFile(data.filepath, data.contents, (err)=>{
+                fs.writeFile(data.filepath, data.contents, {encoding: "utf8"}, (err)=>{
                     let returnData = {}
                     if (err) {
                         returnData = {
@@ -396,7 +396,7 @@ ipcMain.on("fileAction", (event, data)=>{
                 ]
             }).then(result=>{
                 if (!result.canceled) {
-                    fs.writeFile(result.filePath, data.contents, (err)=>{
+                    fs.writeFile(result.filePath, data.contents, {encoding: "utf8"}, (err)=>{
                         let returnData = {};
                         if (err) {
                             returnData = {
@@ -424,7 +424,7 @@ ipcMain.on("fileAction", (event, data)=>{
             };
             data.data.forEach(element=>{
                 try {
-                    fs.writeFileSync(element.filepath, element.contents);
+                    fs.writeFileSync(element.filepath, element.contents, {encoding: "utf8"},);
                     returnData.saveDone.push(element.filepath);
                 }
                 catch(err) {
@@ -527,8 +527,8 @@ let tray = null;
 ipcMain.on("temporarily-hide", (event, data)=>{
     if (data) {
         try {
-            // tray = new Tray("assets/icons/notefinity.png"); // For development
-            let trayIcon = path.join(__dirname, "assets/icons/notefinity.ico");
+            let trayIcon = path.resolve("assets/icons/notefinity.ico"); // For development
+            // let trayIcon = path.join(path.dirname(__dirname), "assets/icons/notefinity.ico"); // For Production
             tray = new Tray(trayIcon);
             tray.setTitle("NoteFinity");
             tray.setToolTip("Show NoteFinity");
@@ -702,7 +702,7 @@ ipcMain.on("download-text-to-speech", (event, data)=>{
         ]
     }).then(result=>{
         if (!result.canceled) {
-            fs.writeFile(result.filePath, storage.getBinaryData(), (err)=>{
+            fs.writeFile(result.filePath, storage.getBinaryData(), {encoding: "utf8"}, (err)=>{
                 if (err) {
 
                 }
@@ -777,8 +777,8 @@ if (!gotTheLock) {
 else {
     app.on("ready", ()=>{
         createWindow();
-        // const argv = process.argv.slice(2); // For development
-        const argv = process.argv.slice(1); // For production
+        const argv = process.argv.slice(2); // For development
+        // const argv = process.argv.slice(1); // For production
         if (argv.length > 0) {
             if (argv.indexOf("--update") != -1) {
                 ipcMain.emit("check-for-updates");
@@ -794,7 +794,18 @@ else {
                 createResetWindow();
             }
             else if (argv.indexOf("--help") != -1) {
-                console.log("Something help");
+                if (win) {
+                    win.close()
+                }
+                console.log(`Usage: NoteFinity.exe [options]
+
+Options:
+    --file <filepath>   : Open a file
+    --version   : Prints the version
+    --reset     : Resets NoteFinity
+    --update    : Updates NoteFinity
+    --help      : Show this help message
+`);
                 process.exit();
             }
             
@@ -845,12 +856,6 @@ app.on("second-instance", (event, commandLine, workingDirectory)=>{
     }
 })
 
-app.on("browser-window-blur", ()=>{
-    if (win) {
-        win.webContents.send("window-blurred", true);
-    }
-})
-
 process.on("uncaughtException", (error)=>{
     if (error.code == "ENOTFOUND") {
         win.webContents.send("show-alert", ["You are offline or the hostname could not be resolved.", "error"]);
@@ -881,8 +886,8 @@ class Updater {
 
     getPackageInfo() {
         try {
-            // let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
-            let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
+            let info = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8").toString()); // Development
+            // let info = JSON.parse(fs.readFileSync(path.resolve("resources/app.asar/package.json"), "utf8").toString()) // Production
             return info;
         }
         catch(err) {
